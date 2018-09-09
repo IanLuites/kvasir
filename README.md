@@ -1,0 +1,2 @@
+# kvasir
+Opinionated Kafka library.
