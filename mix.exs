@@ -61,6 +61,8 @@ defmodule Kvasir.MixProject do
 
   defp deps do
     [
+      {:ksql, path: "../ksql", optional: true},
+      {:kvasir_agent, path: "../agent", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
