@@ -55,6 +55,10 @@ defmodule Kvasir.Client.Consumer do
         %{callback: callback, to: to, events: events, client: client}
       )
 
+    if is_integer(to) and (to <= 0 or (is_integer(from) and to <= from)) do
+      callback.(:end)
+    end
+
     {:ok, pid, client}
   end
 
