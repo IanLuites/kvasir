@@ -6,7 +6,7 @@ defmodule Kvasir.Event do
 
   defmacro __using__(_opts \\ []) do
     quote do
-      import Kvasir.Event, only: [defevent: 2]
+      import Kvasir.Event, only: [event: 2]
     end
   end
 
@@ -16,7 +16,7 @@ defmodule Kvasir.Event do
     end
   end
 
-  defmacro defevent(type, do: block) do
+  defmacro event(type, do: block) do
     quote do
       Module.register_attribute(__MODULE__, :event_fields, accumulate: true)
 

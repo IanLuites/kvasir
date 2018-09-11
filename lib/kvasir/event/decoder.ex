@@ -35,7 +35,12 @@ defmodule Kvasir.Event.Decoder do
     end
   end
 
-  def decode({:kafka_message, offset, key, value, ts_type, ts, headers}, events \\ []) do
+  def decode(value, events \\ [])
+
+  def decode({:kafka_message_set, _topic, _from, _to, values}, events),
+    do: Enum.map(values, &decode(&1, events))
+
+  def decode({:kafka_message, offset, key, value, ts_type, ts, headers}, events) do
     decode(
       value,
       %Kvasir.Event.Meta{
@@ -93,11 +98,12 @@ defmodule Kvasir.Event.Decoder do
   defp do_decode_event([], _data, acc), do: acc
 
   defp do_decode_event([{property, type} | props], data, acc) do
-    if value = parse_type(Map.get(data, to_string(property)), type) do
-      do_decode_event(props, data, Map.put(acc, property, value))
-    else
-      IO.inspect(property)
-      nil
+    case Map.fetch(data, to_string(property)) do
+      {:ok, value} ->
+        do_decode_event(props, data, Map.put(acc, property, parse_type(value, type)))
+
+      :error ->
+        nil
     end
   end
 
