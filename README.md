@@ -23,6 +23,11 @@ The docs can be found at [https://hexdocs.pm/kvasir](https://hexdocs.pm/kvasir).
 [Kvasir Agent](https://github.com/IanLuites/kvasir_agent)
 extension to allow for aggregated state processes.
 
+### Kvasir Projector
+
+[Kvasir Projector](https://github.com/IanLuites/kvasir_projector)
+extension to allow for event projection.
+
 ### KSQL
 
 [KSQL](https://github.com/IanLuites/ksql)
