@@ -12,7 +12,7 @@ defmodule Kvasir.Client.Info do
   end
 
   def offset(client, topic, :last) do
-    with {:ok, offset} when offset > 0 <- offset(client, topic, :latest) do
+    with {:ok, offset} when offset >= 0 <- offset(client, topic, :latest) do
       {:ok, offset - 1}
     end
   end
