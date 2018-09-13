@@ -107,7 +107,8 @@ defmodule Kvasir.Event.Decoder do
     end
   end
 
+  @unix ~N[1970-01-01 00:00:00]
   defp parse_type(nil, _), do: nil
-  defp parse_type(value, :datetime), do: DateTime.from_unix!(value, :milliseconds)
+  defp parse_type(value, :datetime), do: NaiveDateTime.add(@unix, value, :milliseconds)
   defp parse_type(value, _), do: value
 end
