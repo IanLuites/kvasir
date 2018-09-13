@@ -1,6 +1,6 @@
 defmodule Kvasir.MixProject do
   use Mix.Project
-  @version "0.0.1-proto0"
+  @version "0.0.1-proto1"
 
   def project do
     [
@@ -62,6 +62,7 @@ defmodule Kvasir.MixProject do
   defp deps do
     [
       {:brod, "~> 3.7"},
+      {:jason, "~> 1.1"},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
