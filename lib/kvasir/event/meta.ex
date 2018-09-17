@@ -1,5 +1,7 @@
 defmodule Kvasir.Event.Meta do
   defstruct [
+    :topic,
+    :partition,
     :offset,
     :key,
     :ts_type,

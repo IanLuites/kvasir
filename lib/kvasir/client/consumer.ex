@@ -1,5 +1,6 @@
 defmodule Kvasir.Client.Consumer do
   @moduledoc false
+  require Logger
 
   def consume(config, topic, callback, opts) do
     start_consume(config, topic, callback, opts)
@@ -62,14 +63,20 @@ defmodule Kvasir.Client.Consumer do
     {:ok, pid, client}
   end
 
-  def handle_message(_partition, message, state = %{callback: callback, to: to, events: events}) do
-    events = Kvasir.Event.Decoder.decode(message, events)
-    callback.(events)
+  def handle_message(partition, message, state = %{callback: callback, to: to, events: events}) do
+    case Kvasir.Event.decode(message, partition: partition, events: events, encoding: :brod) do
+      {:ok, event} ->
+        callback.(event)
 
-    if to && List.last(events).__meta__.offset >= to do
-      callback.(:end)
+        if to && List.last(event).__meta__.offset >= to do
+          callback.(:end)
+        end
+
+        {:ok, :ack, state}
+
+      {:error, reason} ->
+        Logger.error(fn -> "Kvasir: parse error (#{reason}), payload: #{inspect(message)}" end)
+        {:ok, :nack, state}
     end
-
-    {:ok, :ack, state}
   end
 end

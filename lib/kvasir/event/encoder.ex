@@ -1,24 +1,21 @@
 defmodule Kvasir.Event.Encoder do
-  def encode(event) do
-    %{
-      type: type(event),
-      meta: meta(event),
-      payload: payload(event)
-    }
-  end
+  def encode(event, opts \\ []), do: encoding(opts).encode(event, opts)
 
-  defp type(%event{}), do: event.__event__(:type)
+  @base_encoders %{
+    brod: Kvasir.Event.Encodings.Brod,
+    json: Kvasir.Event.Encodings.JSON,
+    raw: Kvasir.Event.Encodings.Raw
+  }
 
-  defp meta(%{__meta__: meta}) do
-    meta
-    |> Map.from_struct()
-    |> Enum.reject(&is_nil(elem(&1, 1)))
-    |> Enum.into(%{})
-  end
+  @spec encoding(Keyword.t()) :: module
+  defp encoding(opts) do
+    encoding = opts[:encoding]
 
-  defp payload(event) do
-    event
-    |> Map.from_struct()
-    |> Map.delete(:__meta__)
+    cond do
+      is_nil(encoding) -> Kvasir.Event.Encodings.JSON
+      :erlang.function_exported(encoding, :encode, 2) -> encoding
+      encoding = @base_encoders[encoding] -> encoding
+      :no_valid_given -> {:error, :invalid_encoding}
+    end
   end
 end
