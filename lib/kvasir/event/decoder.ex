@@ -113,7 +113,7 @@ defmodule Kvasir.Event.Decoder do
     end
   end
 
-  defp do_multi_decode([], opts, acc), do: {:ok, Enum.reverse(acc)}
+  defp do_multi_decode([], _opts, acc), do: {:ok, Enum.reverse(acc)}
 
   defp do_multi_decode([head | tail], opts, acc) do
     case decode(head, opts) do

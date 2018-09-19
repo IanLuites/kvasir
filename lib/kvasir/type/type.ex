@@ -34,7 +34,7 @@ defmodule Kvasir.Type do
   def load(type, value, opts),
     do: if(Code.ensure_loaded?(type), do: type.load(value, opts), else: {:error, :unknown, type})
 
-  def dump(type, value, opts) do
+  def dump(_type, value, _opts) do
     {:ok, value}
   end
 

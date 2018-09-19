@@ -1,7 +1,7 @@
 defmodule Kvasir.Event.Encodings.Raw do
   import Kvasir.Type, only: [do_encode: 3]
 
-  def encode(event, opts) do
+  def encode(event, _opts) do
     with {:ok, payload} <- payload(event) do
       {:ok,
        %{
@@ -12,7 +12,7 @@ defmodule Kvasir.Event.Encodings.Raw do
     end
   end
 
-  def decode(data, opts), do: {:ok, data}
+  def decode(data, _opts), do: {:ok, data}
 
   ### Helpers ###
 
