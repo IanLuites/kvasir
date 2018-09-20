@@ -43,6 +43,7 @@ defmodule Kvasir.MixProject do
         # Elixir
         "lib/kvasir",
         "lib/kvasir.ex",
+        ".formatter.exs",
         "mix.exs",
         "README*",
         "LICENSE*"
