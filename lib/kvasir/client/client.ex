@@ -14,8 +14,6 @@ defmodule Kvasir.Client do
         end
 
         config = Application.get_env(unquote(otp), __MODULE__, [])
-        events = Kvasir.Event.Discovery.discover(config[:events])
-        config = Keyword.put(config, :events, events)
 
         GenServer.start_link(__MODULE__, %{config: config}, name: __MODULE__)
       end
@@ -40,17 +38,13 @@ defmodule Kvasir.Client do
       ### Consumer ###
 
       def consume(topic, callback, opts \\ []) do
-        with %{config: config} <- :sys.get_state(__MODULE__) do
-          base = [events: config[:events] || []]
-          consume(config[:kafka], topic, callback, Keyword.merge(base, opts))
-        end
+        with %{config: config} <- :sys.get_state(__MODULE__),
+             do: consume(config[:kafka], topic, callback, opts)
       end
 
       def stream(topic, opts \\ []) do
-        with %{config: config} <- :sys.get_state(__MODULE__) do
-          base = [events: config[:events] || []]
-          stream(config[:kafka], topic, Keyword.merge(base, opts))
-        end
+        with %{config: config} <- :sys.get_state(__MODULE__),
+             do: stream(config[:kafka], topic, opts)
       end
 
       ### Producer ###

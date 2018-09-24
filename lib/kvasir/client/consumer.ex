@@ -53,7 +53,7 @@ defmodule Kvasir.Client.Consumer do
         [],
         :message_set,
         &handle_message/3,
-        %{callback: callback, to: to, events: events, client: client}
+        %{topic: topic, callback: callback, to: to, events: events, client: client}
       )
 
     if is_integer(to) and (to < 0 or (is_integer(from) and to <= from)) do
@@ -63,8 +63,8 @@ defmodule Kvasir.Client.Consumer do
     {:ok, pid, client}
   end
 
-  def handle_message(partition, message, state = %{callback: callback, to: to, events: events}) do
-    case Kvasir.Event.decode(message, partition: partition, events: events, encoding: :brod) do
+  def handle_message(partition, message, state = %{callback: callback, to: to, topic: topic}) do
+    case Kvasir.Event.decode(message, partition: partition, topic: topic, encoding: :brod) do
       {:ok, event} ->
         callback.(event)
 

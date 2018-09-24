@@ -19,6 +19,8 @@ defmodule Kvasir.Event do
   end
 
   defmacro event(type, do: block) do
+    registry = Module.concat(Kvasir.Event.Registry, __CALLER__.module)
+
     quote do
       Module.register_attribute(__MODULE__, :fields, accumulate: true)
 
@@ -27,6 +29,16 @@ defmodule Kvasir.Event do
         unquote(block)
       after
         :ok
+      end
+
+      defmodule unquote(registry) do
+        @doc false
+        @spec type :: String.t()
+        def type, do: unquote(Kvasir.Util.name(type))
+
+        @doc false
+        @spec module :: module
+        def module, do: unquote(__CALLER__.module)
       end
 
       @event_fields Enum.reverse(@fields)

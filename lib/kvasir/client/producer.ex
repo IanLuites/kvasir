@@ -1,13 +1,13 @@
 defmodule Kvasir.Client.Producer do
   @moduledoc false
-  alias Kvasir.Event
+  alias Kvasir.{Event, Offset}
 
   def producer(client, topic), do: :brod.start_producer(client, topic, [])
 
   def produce(client, events) when is_list(events) do
-    Enum.reduce_while(events, {:ok, -1}, fn event, {:ok, _} ->
+    Enum.reduce_while(events, {:ok, Offset.create()}, fn event, {:ok, acc} ->
       case produce(client, event) do
-        {:ok, offset} -> {:cont, {:ok, offset}}
+        {:ok, offset} -> {:cont, {:ok, Offset.set(acc, offset)}}
         error -> {:halt, error}
       end
     end)
@@ -20,9 +20,9 @@ defmodule Kvasir.Client.Producer do
   end
 
   def produce(client, topic, partition, key, events) when is_list(events) do
-    Enum.reduce_while(events, {:ok, -1}, fn event, {:ok, _} ->
+    Enum.reduce_while(events, {:ok, Offset.create()}, fn event, {:ok, acc} ->
       case produce(client, topic, partition, key, event) do
-        {:ok, offset} -> {:cont, {:ok, offset}}
+        {:ok, offset} -> {:cont, {:ok, Offset.set(acc, partition, offset)}}
         error -> {:halt, error}
       end
     end)
