@@ -88,7 +88,7 @@ defmodule Kvasir.Type do
 
   defp base_load(:utc_datetime, value, opts) do
     cond do
-      is_binary(value) -> DateTime.from_iso8601(value)
+      is_binary(value) -> with {:ok, dt, _} <- DateTime.from_iso8601(value), do: {:ok, dt}
       is_integer(value) -> DateTime.from_unix(value, opts[:unit] || :millisecond)
       :invalid_format -> {:error, :invalid_date_format}
     end
