@@ -17,13 +17,6 @@ defmodule Kvasir.Event.Encodings.Raw do
   ### Helpers ###
 
   defp type(%event{}), do: event.__event__(:type)
-
-  defp meta(%{__meta__: meta}) do
-    meta
-    |> Map.from_struct()
-    |> Enum.reject(&is_nil(elem(&1, 1)))
-    |> Enum.into(%{})
-  end
-
+  defp meta(%{__meta__: meta}), do: Kvasir.Event.Meta.encode(meta)
   defp payload(event = %type{}), do: do_encode(event, type.__event__(:fields), %{})
 end
