@@ -15,6 +15,12 @@ defmodule Kvasir.Client do
 
         config = Application.get_env(unquote(otp), __MODULE__, [])
 
+        config =
+          case Kvasir.Config.brokers(config[:kafka]) do
+            {:ok, brokers} -> Keyword.put(config, :kafka, brokers)
+            {:error, reason} -> raise "Invalid broker configuration: #{inspect(reason)}"
+          end
+
         GenServer.start_link(__MODULE__, %{config: config}, name: __MODULE__)
       end
 
