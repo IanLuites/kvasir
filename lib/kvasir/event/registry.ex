@@ -3,5 +3,5 @@ defmodule Kvasir.Event.Registry do
   Lookup events.
   """
   @spec lookup(String.t()) :: module | nil
-  def lookup(type), do: nil
+  def lookup(_type), do: nil
 end
