@@ -29,6 +29,11 @@ defmodule Kvasir.Client do
 
         Enum.each(state.config[:topics] || [], &producer/1)
 
+        spawn_link(fn ->
+          Kvasir.Util.AutoStart.start_link(__MODULE__)
+          Process.sleep(:infinity)
+        end)
+
         {:ok, state}
       end
 
