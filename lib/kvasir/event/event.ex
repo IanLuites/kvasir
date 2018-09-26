@@ -87,4 +87,9 @@ defmodule Kvasir.Event do
   @spec key(t) :: term
   def key(%{__meta__: %{key: key}}), do: key
   def key(_), do: nil
+
+  @spec type(t) :: String.t() | nil
+  def type(%event{}), do: event.__event__(:type)
+  def type(event) when is_atom(event), do: event.__event__(:type)
+  def type(_), do: nil
 end
