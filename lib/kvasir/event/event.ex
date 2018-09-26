@@ -6,9 +6,12 @@ defmodule Kvasir.Event do
     :__meta__
   ]
 
-  defmacro __using__(_opts \\ []) do
+  defmacro __using__(opts \\ []) do
+    on_error = opts[:on_error] || :halt
+
     quote do
       import Kvasir.Event, only: [event: 2]
+      @on_error unquote(on_error)
     end
   end
 
@@ -32,6 +35,8 @@ defmodule Kvasir.Event do
       end
 
       defmodule unquote(registry) do
+        @moduledoc false
+
         @doc false
         @spec type :: String.t()
         def type, do: unquote(Kvasir.Util.name(type))
@@ -46,8 +51,10 @@ defmodule Kvasir.Event do
                   [__meta__: %Kvasir.Event.Meta{}]
 
       @doc false
+      @spec __event__(atom) :: term
       def __event__(:type), do: unquote(Kvasir.Util.name(type))
       def __event__(:fields), do: @event_fields
+      def __event__(:on_error), do: @on_error
 
       defimpl Jason.Encoder, for: __MODULE__ do
         alias Jason.EncodeError
@@ -87,6 +94,10 @@ defmodule Kvasir.Event do
   @spec key(t) :: term
   def key(%{__meta__: %{key: key}}), do: key
   def key(_), do: nil
+
+  @spec on_error(t) :: :halt | :skip
+  def on_error(%__MODULE__{}), do: :halt
+  def on_error(%event{}), do: event.__event__(:on_error)
 
   @spec type(t) :: String.t() | nil
   def type(%event{}), do: event.__event__(:type)
