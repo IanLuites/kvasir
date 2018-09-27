@@ -49,7 +49,12 @@ defmodule Kvasir.Event.Decoder do
   defp decode_event(data, meta, event),
     do: do_decode_event(event.__event__(:fields), data, %{__meta__: meta}, event)
 
-  defp do_decode_event([], _data, acc, event), do: {:ok, struct!(event, acc)}
+  defp do_decode_event([], _data, acc, event) do
+    event = struct!(event, acc)
+    meta = event.__meta__
+    key_type = Kvasir.Event.key_type(event)
+    {:ok, %{event | __meta__: %{meta | key: key_decode(key_type, meta.key)}}}
+  end
 
   defp do_decode_event([{property, type, opts} | props], data, acc, event) do
     with {:ok, value} <- Map.fetch(data, to_string(property)),
@@ -74,4 +79,9 @@ defmodule Kvasir.Event.Decoder do
       error -> error
     end
   end
+
+  defp key_decode(:integer, value) when is_integer(value), do: value
+  defp key_decode(:integer, value), do: String.to_integer(value)
+  defp key_decode(:string, value) when is_integer(value), do: to_string(value)
+  defp key_decode(:string, value), do: value
 end

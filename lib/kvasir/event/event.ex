@@ -8,10 +8,12 @@ defmodule Kvasir.Event do
 
   defmacro __using__(opts \\ []) do
     on_error = opts[:on_error] || :halt
+    key_type = opts[:key_type] || :string
 
     quote do
       import Kvasir.Event, only: [event: 2]
       @on_error unquote(on_error)
+      @key_type unquote(key_type)
     end
   end
 
@@ -55,6 +57,7 @@ defmodule Kvasir.Event do
       def __event__(:type), do: unquote(Kvasir.Util.name(type))
       def __event__(:fields), do: @event_fields
       def __event__(:on_error), do: @on_error
+      def __event__(:key_type), do: @key_type
 
       defimpl Jason.Encoder, for: __MODULE__ do
         alias Jason.EncodeError
@@ -94,6 +97,11 @@ defmodule Kvasir.Event do
   @spec key(t) :: term
   def key(%{__meta__: %{key: key}}), do: key
   def key(_), do: nil
+
+  @spec key(t) :: :string | :integer
+  def key_type(%event{}), do: event.__event__(:key_type)
+  def key_type(event) when is_atom(event), do: event.__event__(:key_type)
+  def key_type(_), do: :string
 
   @spec on_error(t) :: :halt | :skip
   def on_error(%__MODULE__{}), do: :halt

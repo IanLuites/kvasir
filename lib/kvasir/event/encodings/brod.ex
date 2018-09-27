@@ -13,5 +13,11 @@ defmodule Kvasir.Event.Encodings.Brod do
 
   defp topic(%{__meta__: %{topic: topic}}), do: topic
   defp partition(%{__meta__: %{partition: partition}}), do: partition
-  defp key(%{__meta__: %{key: key}}), do: key
+
+  defp key(%event{__meta__: %{key: key}}) do
+    case Kvasir.Event.key_type(event) do
+      :string -> key
+      :integer -> to_string(key)
+    end
+  end
 end
