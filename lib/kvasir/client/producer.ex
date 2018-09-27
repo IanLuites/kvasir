@@ -7,7 +7,7 @@ defmodule Kvasir.Client.Producer do
   def produce(client, events) when is_list(events) do
     Enum.reduce_while(events, {:ok, Offset.create()}, fn event, {:ok, acc} ->
       case produce(client, event) do
-        {:ok, offset} -> {:cont, {:ok, Offset.set(acc, offset)}}
+        {:ok, offset} -> {:cont, {:ok, Offset.set(acc, 0, offset)}}
         error -> {:halt, error}
       end
     end)

@@ -30,7 +30,7 @@ defmodule Kvasir.Client.Consumer do
     events = opts[:events] || []
 
     consumerConfig = [
-      begin_offset: from,
+      begin_offset: Kvasir.Offset.partition(from, 0),
       offset_reset_policy: :reset_to_earliest
     ]
 
