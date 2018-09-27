@@ -45,6 +45,8 @@ defmodule Kvasir.Offset do
     do: %{t | partitions: Map.put(partitions, partition, offset)}
 
   @spec partition(t, non_neg_integer) :: t
+  def partition(:earliest, _partition), do: :earliest
+
   def partition(%__MODULE__{partitions: partitions}, partition),
     do: Map.get(partitions, partition, 0)
 
