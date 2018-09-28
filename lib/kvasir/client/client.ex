@@ -20,9 +20,13 @@ defmodule Kvasir.Client do
       quote do
         @doc false
         @spec start_link(Keyword.t()) :: Supervisor.child_spec()
-        def start_link(_opts \\ []), do: Agent.start_link()
+        def start_link(_opts \\ []) do
+          Kvasir.create_registries()
 
-        # unquote(child_spec)
+          {:ok, spawn_link(fn -> Process.sleep(:infinity) end)}
+        end
+
+        unquote(child_spec)
       end
     else
       quote do
@@ -37,6 +41,8 @@ defmodule Kvasir.Client do
           unless elem(:application.ensure_all_started(:brod), 0) == :ok do
             raise "Can not start the required dependency: :brod"
           end
+
+          Kvasir.create_registries()
 
           config = Application.get_env(unquote(otp), __MODULE__, [])
 
