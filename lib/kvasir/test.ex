@@ -12,7 +12,8 @@ defmodule Kvasir.Test do
           offset: opts[:offset] || %{0 => 1},
           key: opts[:instance],
           ts_type: "woef",
-          ts: NaiveDateTime.diff(NaiveDateTime.utc_now(), @unix, :millisecond),
+          ts:
+            NaiveDateTime.diff(opts[:timestamp] || NaiveDateTime.utc_now(), @unix, :millisecond),
           headers: [],
           command: opts[:command]
         },
