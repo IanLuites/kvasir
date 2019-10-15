@@ -1,14 +1,23 @@
 defmodule Kvasir.Event.Meta do
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+          source: module,
+          topic: String.t(),
+          partition: non_neg_integer,
+          offset: non_neg_integer,
+          key: String.t(),
+          timestamp: NaiveDateTime.t(),
+          meta: map
+        }
 
   defstruct [
+    :source,
     :topic,
     :partition,
     :offset,
     :key,
-    :ts_type,
-    :ts,
-    :headers,
+    :key_type,
+    :timestamp,
+    :meta,
     :command
   ]
 
@@ -22,30 +31,48 @@ defmodule Kvasir.Event.Meta do
   def encode(meta) do
     meta
     |> Map.from_struct()
-    |> Enum.reject(&is_nil(elem(&1, 1)))
-    |> Enum.map(fn {k, v} -> {k, if(is_tuple(v), do: Tuple.to_list(v), else: v)} end)
+    |> Map.delete(:key_type)
+    |> Enum.reject(&nil_value/1)
     |> Enum.into(%{})
   end
 
   @doc false
-  @spec encode(map) :: t
-  def decode(data, meta \\ %__MODULE__{})
-  def decode(data, nil), do: decode(data)
-  def decode(nil, meta), do: meta
+  @spec decode(map | nil) :: t
+  def decode(nil), do: %__MODULE__{}
 
-  def decode(data, meta) when is_map(data) do
+  def decode(data) when is_map(data) do
     struct!(
       __MODULE__,
-      for(
-        {key, val} when val != nil <- data,
-        into: Map.from_struct(meta),
-        do: parse_meta(to_string(key), val)
-      )
+      data
+      |> Enum.reject(&nil_value/1)
+      |> Enum.into(%{}, &atomize/1)
     )
   end
 
-  @spec parse_meta(String.t(), any) :: {atom, any}
-  defp parse_meta("offset", nil), do: {:offset, nil}
-  defp parse_meta("offset", offset), do: {:offset, Kvasir.Offset.create(offset)}
-  defp parse_meta(key, value), do: {String.to_existing_atom(key), value}
+  @doc false
+  @spec encode(t, module) :: {:ok, map} | {:error, atom}
+  def encode(meta, key) do
+    case encode(meta) do
+      data = %{key: k} when k != nil ->
+        with {:ok, k} <- key.dump(k, []), do: {:ok, %{data | key: k}}
+
+      data ->
+        {:ok, data}
+    end
+  end
+
+  @doc false
+  @spec decode(map | nil, module) :: {:ok, t} | {:error, atom}
+  def decode(data, key) do
+    case decode(data) do
+      meta = %{key: nil} -> {:ok, meta}
+      meta = %{key: k} -> with {:ok, k} <- key.parse(k, []), do: {:ok, %{meta | key: k}}
+    end
+  end
+
+  defp atomize(e = {k, _}) when is_atom(k), do: e
+  defp atomize({k, v}), do: {String.to_existing_atom(k), v}
+
+  defp nil_value({_, nil}), do: true
+  defp nil_value(_), do: false
 end
