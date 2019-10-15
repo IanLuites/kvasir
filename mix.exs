@@ -56,16 +56,15 @@ defmodule Kvasir.MixProject do
 
   def application do
     [
-      extra_applications: [:logger],
-      mod: {Kvasir.Application, []}
+      extra_applications: [:logger]
     ]
   end
 
   defp deps do
     [
-      {:brod, "~> 3.7"},
+      {:common_x, "~> 0.2.0"},
       {:jason, "~> 1.1"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:analyze, "~> 0.1.4", optional: true, runtime: false, only: [:dev, :test]}
     ]
   end
 end

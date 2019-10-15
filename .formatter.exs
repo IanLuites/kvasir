@@ -1,7 +1,14 @@
 locals_without_parens = [
   field: 1,
   field: 2,
-  field: 3
+  field: 3,
+  option: 1,
+  option: 2,
+  topic: 2,
+  topic: 3,
+  upgrade: 2,
+  version: 1,
+  version: 2
 ]
 
 [
