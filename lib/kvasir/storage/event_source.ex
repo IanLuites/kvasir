@@ -42,6 +42,8 @@ defmodule Kvasir.EventSource do
       import unquote(__MODULE__), only: [topic: 2, topic: 3]
       Module.register_attribute(__MODULE__, :topics, accumulate: true)
 
+      @doc false
+      @spec child_spec(Keyword.t()) :: map
       def child_spec(opts \\ []) do
         %{
           id: __MODULE__,
@@ -49,6 +51,9 @@ defmodule Kvasir.EventSource do
         }
       end
 
+      @doc false
+      @spec start_link(Keyword.t()) ::
+              {:ok, pid} | {:error, {:already_started, pid} | {:shutdown, term} | term}
       def start_link(opts \\ []) do
         opts =
           Keyword.put(
@@ -60,9 +65,9 @@ defmodule Kvasir.EventSource do
         children =
           unquote(cold_storage_setup)
           |> (&[
-                __event_storage__().child_spec(
+                __source__().child_spec(
                   Module.concat(__MODULE__, Source),
-                  Keyword.merge(unquote(event_storage_opts), opts)
+                  config(:source, Keyword.merge(unquote(event_storage_opts), opts))
                 )
                 | &1
               ]).()
@@ -75,6 +80,18 @@ defmodule Kvasir.EventSource do
         )
       end
 
+      @doc ~S"""
+      Publish an event to a given topic.
+
+      ## Examples
+
+      ```elixir
+      iex> publish("users", UserEvent.create("bob"))
+      :ok
+      ```
+      """
+      @spec publish(String.t(), Kvasir.Event.t(), Keyword.t()) ::
+              {:ok, Kvasir.Event.t()} | {:error, atom}
       def publish(topic, event, opts \\ []) do
         with t = %{key: topic_key, partitions: partitions} <-
                __topics__()[topic] || {:error, :unknown_topic} do
@@ -86,14 +103,14 @@ defmodule Kvasir.EventSource do
                 |> Kvasir.Event.set_partition(topic_key.partition(key, partitions))
                 |> Kvasir.Event.set_topic(topic)
 
-              __event_storage__().commit(
+              __source__().commit(
                 unquote(Module.concat(__CALLER__.module, Source)),
                 t,
                 e
               )
             end
           else
-            __event_storage__().commit(
+            __source__().commit(
               unquote(Module.concat(__CALLER__.module, Source)),
               t,
               event
@@ -102,6 +119,17 @@ defmodule Kvasir.EventSource do
         end
       end
 
+      @doc ~S"""
+      Stream events from a given topic.
+
+      ## Examples
+
+      ```elixir
+      iex> stream("users")
+      #EventStream<"users">
+      ```
+      """
+      @spec stream(String.t(), Keyword.t()) :: {:ok, EventStream.t()} | {:error, atom}
       def stream(topic, opts \\ []) do
         if t = __topics__()[topic] do
           unquote(__MODULE__).stream(__MODULE__, t, opts)
@@ -110,13 +138,25 @@ defmodule Kvasir.EventSource do
         end
       end
 
-      def __event_storage__, do: unquote(event_storage)
-      def __cold_storage__, do: unquote(cold_storages)
+      @doc false
+      @spec __source__ :: term
+      def __source__, do: unquote(event_storage)
+
+      @doc false
+      @spec __storages__ :: term
+      def __storages__, do: unquote(cold_storages)
+
+      @doc false
+      @spec config(atom, Keyword.t()) :: Keyword.t()
+      def config(_name, opts), do: opts
+      defoverridable config: 2
     end
   end
 
   defmacro __before_compile__(_) do
     quote do
+      @doc false
+      @spec __topics__ :: %{required(String.t()) => Kvasir.Topic.t()}
       def __topics__, do: Map.new(@topics)
     end
   end
@@ -214,14 +254,14 @@ defmodule Kvasir.EventSource do
   def stream(source, topic, opts) do
     # raise "Check ColdStorage and EventStorage for criteria."
 
-    if opts[:id] && opts[:partition] do
-      raise "Can not set both id and partition, since id determines partition."
+    if opts[:key] && opts[:partition] do
+      raise "Can not set both key and partition, since id determines partition."
     end
 
     %EventStream{
       source: source,
       topic: topic,
-      id: opts[:id],
+      id: opts[:key],
       partition: opts[:partition],
       from: opts[:from]
     }
