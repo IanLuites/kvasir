@@ -42,9 +42,9 @@ defmodule EventStream do
       acc = {acc_t, {Kvasir.Offset.create(), acc_v}}
 
       {_t, {_offset, cold}} =
-        source.__cold_storage__()
+        source.__storages__()
         |> storages(es.topic, nil)
-        |> Kernel.++([{source.__event_storage__(), Module.concat(source, Source)}])
+        |> Kernel.++([{source.__source__(), Module.concat(source, Source)}])
         |> cold_storage(es, acc, fun_x)
 
       {:done, cold}
