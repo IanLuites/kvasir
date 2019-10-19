@@ -42,6 +42,11 @@ defmodule Kvasir.Offset do
     end)
   end
 
+  defimpl Jason.Encoder, for: __MODULE__ do
+    alias Jason.Encoder.Map
+    def encode(%{partitions: p}, opts), do: Map.encode(p, opts)
+  end
+
   defimpl Inspect, for: __MODULE__ do
     import Inspect.Algebra
 
