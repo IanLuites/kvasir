@@ -31,19 +31,25 @@ defmodule Kvasir.Type do
     quote location: :keep do
       @behaviour unquote(__MODULE__)
 
+      @spec name :: String.t()
       @impl unquote(__MODULE__)
       def name, do: unquote(name)
 
       @shared_doc @moduledoc || ""
+      @spec doc :: String.t()
       @impl unquote(__MODULE__)
       def doc, do: @shared_doc
 
+      @spec parse(value :: any, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
       @impl unquote(__MODULE__)
       def parse(value, _opts), do: {:ok, value}
 
+      @spec dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
       @impl unquote(__MODULE__)
       def dump(value, _opts), do: {:ok, value}
 
+      @spec obfuscate(value :: term, opts :: Keyword.t()) ::
+              {:ok, term} | :obfuscate | {:error, atom}
       @impl unquote(__MODULE__)
       def obfuscate(_value, _opts), do: :obfuscate
 
