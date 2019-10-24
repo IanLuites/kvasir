@@ -68,7 +68,8 @@ defmodule EventStream do
       if cold.contains?(name, es.topic, es.from) in [false] do
         cold_storage(tail, es, acc, fun)
       else
-        {:ok, stream} = cold.stream(name, es.topic, from: es.from, id: es.id)
+        {:ok, stream} =
+          cold.stream(name, es.topic, from: es.from, id: es.id, partition: es.partition)
 
         {type, {new_acc, o}} =
           case Enumerable.reduce(stream, acc, fun) do
