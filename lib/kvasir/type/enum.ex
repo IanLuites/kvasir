@@ -9,15 +9,26 @@ defmodule Kvasir.Type.Enum do
 
   defmacro option(value, opts \\ []) do
     quote do
-      @options {unquote(value), unquote(opts)}
+      Module.put_attribute(
+        __MODULE__,
+        :options,
+        {unquote(value),
+         unquote(opts)
+         |> Keyword.put_new_lazy(:doc, fn ->
+           case Module.delete_attribute(__MODULE__, :doc) do
+             {_, doc} -> doc
+             _ -> nil
+           end
+         end)}
+      )
     end
   end
 
   defmacro __before_compile__(env) do
-    {parse, dump} =
+    {parse, dump, all} =
       env.module
       |> Module.get_attribute(:options)
-      |> Enum.reduce({nil, nil}, fn {value, opts}, {parse, dump} ->
+      |> Enum.reduce({nil, nil, []}, fn {value, opts}, {parse, dump, acc} ->
         encoded = Keyword.get_lazy(opts, :encoded, fn -> to_string(value) end)
 
         {quote do
@@ -28,7 +39,7 @@ defmodule Kvasir.Type.Enum do
          quote do
            unquote(dump)
            def dump(unquote(value), _opts), do: {:ok, unquote(encoded)}
-         end}
+         end, [{value, encoded, Keyword.take(opts, ~w(doc)a)} | acc]}
       end)
 
     quote do
@@ -43,6 +54,10 @@ defmodule Kvasir.Type.Enum do
       @impl Kvasir.Type
       def dump(value, opts \\ [])
       unquote(dump)
+
+      @doc false
+      @spec __enum__ :: [{term, term, Keyword.t()}]
+      def __enum__, do: unquote(Macro.escape(all))
     end
   end
 end
