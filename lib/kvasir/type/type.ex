@@ -66,9 +66,10 @@ defmodule Kvasir.Type do
     float: __MODULE__.Float,
     integer: __MODULE__.Integer,
     ip: __MODULE__.IP,
-    pos_integer: __MODULE__.PosInteger,
-    non_neg_integer: __MODULE__.NonNegInteger,
+    list: __MODULE__.List,
     map: __MODULE__.Map,
+    non_neg_integer: __MODULE__.NonNegInteger,
+    pos_integer: __MODULE__.PosInteger,
     string: __MODULE__.String,
     timestamp: __MODULE__.Timestamp
   }
