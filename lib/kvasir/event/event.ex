@@ -185,12 +185,15 @@ defmodule Kvasir.Event do
         import Inspect.Algebra
 
         def inspect(data = %event{}, opts) do
+          fields = event.__event__(:fields)
+
           a =
             data
             |> Map.drop(~w(__meta__ __struct__)a)
             |> Map.new(fn {k, v} ->
               if v != nil and k in event.__event__(:sensitive) do
-                {k, %Kvasir.Event.Sensitive{value: v, type: event.__event__(:type, k)}}
+                o = Enum.find_value(fields, [], fn {f, _, o} -> if(f == k, do: o) end)
+                {k, %Kvasir.Event.Sensitive{opts: o, value: v, type: event.__event__(:type, k)}}
               else
                 {k, v}
               end
@@ -225,6 +228,7 @@ defmodule Kvasir.Event do
     end
   end
 
+  defdelegate encode(event), to: Kvasir.Event.Encoding
   defdelegate encode(topic, event, opts \\ []), to: Kvasir.Event.Encoding
   defdelegate decode(topic, event, opts \\ []), to: Kvasir.Event.Encoding
 
