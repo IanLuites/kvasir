@@ -59,9 +59,16 @@ defmodule Kvasir.Event do
 
     quote do
       @doc ~S"""
-      Upgrade payload from older to current version.
+      Upgrade event payload from older to current version.
+
+      ## Examples
+
+      ```elixir
+      iex> upgrade(#Version<1.0.0>, %Event{...})
+      ```
       """
       @spec upgrade(Version.t(), map) :: {:ok, map} | {:error, atom}
+      def upgrade(version, event)
       unquote(upgrades)
       def upgrade(_, event), do: {:ok, event}
     end
@@ -150,13 +157,25 @@ defmodule Kvasir.Event do
       def __event__(:type, field), do: @field_type[field]
 
       @doc ~S"""
-      Create!
+      Create an event based on given fields.
+
+      ## Examples
+
+      ```elixir
+      iex> create(field: :value)
+      ```
       """
       @spec create(Keyword.t()) :: {:ok, Event.t()}
       def create(fields \\ []), do: Kvasir.Event.Encoding.create(__MODULE__, Map.new(fields))
 
       @doc ~S"""
-      Create!
+      Create an event based on given fields.
+
+      ## Examples
+
+      ```elixir
+      iex> create!(field: :value)
+      ```
       """
       @spec create!(Keyword.t()) :: {:ok, Event.t()}
       def create!(fields \\ []) do
