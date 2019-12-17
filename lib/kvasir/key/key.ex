@@ -16,6 +16,8 @@ defmodule Kvasir.Key do
   @callback dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
   @callback partition(value :: term, opts :: Keyword.t()) ::
               {:ok, term} | :obfuscate | {:error, atom}
+  @callback obfuscate(value :: term, opts :: Keyword.t()) ::
+              {:ok, term} | :obfuscate | {:error, atom}
 
   defmacro __using__(opts \\ []) do
     name =
@@ -35,6 +37,11 @@ defmodule Kvasir.Key do
           @spec dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
           @impl unquote(__MODULE__)
           def dump(value, opts), do: unquote(t).dump(value, opts)
+
+          @spec obfuscate(value :: term, opts :: Keyword.t()) ::
+                  {:ok, term} | :obfuscate | {:error, atom}
+          @impl unquote(__MODULE__)
+          def obfuscate(value, opts), do: unquote(t).obfuscate(value, opts)
         end
       else
         quote do
@@ -45,6 +52,11 @@ defmodule Kvasir.Key do
           @spec dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
           @impl unquote(__MODULE__)
           def dump(value, _opts), do: {:ok, value}
+
+          @spec obfuscate(value :: term, opts :: Keyword.t()) ::
+                  {:ok, term} | :obfuscate | {:error, atom}
+          @impl unquote(__MODULE__)
+          def obfuscate(_value, _opts), do: :obfuscate
         end
       end
 
@@ -61,7 +73,7 @@ defmodule Kvasir.Key do
       def doc, do: @shared_doc
 
       unquote(base)
-      defoverridable parse: 2, dump: 2
+      defoverridable parse: 2, dump: 2, obfuscate: 2
     end
   end
 end
