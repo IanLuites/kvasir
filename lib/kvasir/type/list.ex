@@ -26,7 +26,7 @@ defmodule Kvasir.Type.List do
 
   defp obfuscator(type) do
     t = Kvasir.Type.lookup(type)
-    &t.obfuscate/1
+    &t.obfuscate(&1, [])
   end
 
   defp parser(nil), do: &Kvasir.Util.identity/1
@@ -38,7 +38,7 @@ defmodule Kvasir.Type.List do
 
   defp parser(type) do
     t = Kvasir.Type.lookup(type)
-    &t.parse/1
+    &t.parse(&1, [])
   end
 
   defp dumper(nil), do: &Kvasir.Util.identity/1
