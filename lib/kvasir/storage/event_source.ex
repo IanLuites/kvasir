@@ -258,12 +258,25 @@ defmodule Kvasir.EventSource do
       raise "Can not set both key and partition, since id determines partition."
     end
 
+    id =
+      if k = opts[:key] do
+        case topic.key.parse(k, opts) do
+          {:ok, kv} -> kv
+          {:error, reason} -> raise "Invalid topic key: #{inspect(reason)}"
+        end
+      end
+
     %EventStream{
       source: source,
       topic: topic,
-      id: opts[:key],
+      id: id,
       partition: opts[:partition],
-      from: opts[:from]
+      from: opts[:from],
+      events: events(opts[:events])
     }
   end
+
+  defp events(nil), do: nil
+  defp events(events) when is_list(events), do: events
+  defp events(event) when is_atom(event), do: [event]
 end
