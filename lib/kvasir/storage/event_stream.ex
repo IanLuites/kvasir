@@ -128,6 +128,12 @@ defmodule EventStream do
        c}
     end
 
+    defp filter(
+           {a, {:doc_cons, {:doc_nest, {:doc_cons, _, inside}, b, b2}, {:doc_cons, close, _}}, c}
+         ) do
+      {a, {:doc_cons, {:doc_nest, {:doc_cons, " ", inside}, b, b2}, close}, c}
+    end
+
     defp filter(unknown), do: unknown
   end
 end
