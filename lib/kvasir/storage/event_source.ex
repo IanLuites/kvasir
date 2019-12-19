@@ -266,13 +266,22 @@ defmodule Kvasir.EventSource do
         end
       end
 
+    events = events(opts[:events])
+    missing = Enum.filter(events || [], &(&1 not in topic.events))
+
+    unless missing == [] do
+      raise "The following events do not belong to the topic:\n#{
+              missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")
+            }"
+    end
+
     %EventStream{
       source: source,
       topic: topic,
       id: id,
       partition: opts[:partition],
       from: opts[:from],
-      events: events(opts[:events])
+      events: events
     }
   end
 
