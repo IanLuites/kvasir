@@ -127,5 +127,7 @@ defmodule EventStream do
          {:doc_cons, {:doc_color, "", :default_color}, {:doc_color, :doc_nil, [:reset, :yellow]}}}},
        c}
     end
+
+    defp filter(unknown), do: unknown
   end
 end
