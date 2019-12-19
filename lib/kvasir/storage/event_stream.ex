@@ -1,5 +1,5 @@
 defmodule EventStream do
-  defstruct ~w(source topic id partition from)a
+  defstruct ~w(source topic id partition from events)a
 
   def start(stream, opts \\ []) do
     pid = opts[:pid] || self()
