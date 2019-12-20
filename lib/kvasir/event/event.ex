@@ -177,7 +177,7 @@ defmodule Kvasir.Event do
       iex> create!(field: :value)
       ```
       """
-      @spec create!(Keyword.t()) :: {:ok, Event.t()}
+      @spec create!(Keyword.t()) :: Event.t() | no_return
       def create!(fields \\ []) do
         case create(fields) do
           {:ok, event} -> event
