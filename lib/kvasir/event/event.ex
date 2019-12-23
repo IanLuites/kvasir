@@ -165,7 +165,7 @@ defmodule Kvasir.Event do
       iex> create(field: :value)
       ```
       """
-      @spec create(Keyword.t()) :: {:ok, Event.t()}
+      @spec create(Keyword.t()) :: {:ok, Event.t()} | {:error, reason :: atom}
       def create(fields \\ []), do: Kvasir.Event.Encoding.create(__MODULE__, Map.new(fields))
 
       @doc ~S"""
