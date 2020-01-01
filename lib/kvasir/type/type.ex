@@ -53,6 +53,10 @@ defmodule Kvasir.Type do
       @impl unquote(__MODULE__)
       def obfuscate(_value, _opts), do: :obfuscate
 
+      @doc false
+      @spec __type__(atom) :: term
+      def __type__(:name), do: unquote(name)
+
       defoverridable parse: 2, dump: 2, obfuscate: 2
     end
   end

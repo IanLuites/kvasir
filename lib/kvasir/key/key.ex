@@ -72,6 +72,10 @@ defmodule Kvasir.Key do
       @impl unquote(__MODULE__)
       def doc, do: @shared_doc
 
+      @doc false
+      @spec __key__(atom) :: term
+      def __key__(:name), do: unquote(name)
+
       unquote(base)
       defoverridable parse: 2, dump: 2, obfuscate: 2
     end
