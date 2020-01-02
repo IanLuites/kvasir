@@ -1,7 +1,7 @@
 defmodule Kvasir.Event do
   require Logger
 
-  @type t :: map
+  @type t :: struct
 
   defstruct [
     :value,
@@ -198,7 +198,7 @@ defmodule Kvasir.Event do
       iex> create(field: :value)
       ```
       """
-      @spec create(Keyword.t()) :: {:ok, Event.t()} | {:error, reason :: atom}
+      @spec create(Keyword.t()) :: {:ok, Kvasir.Event.t()} | {:error, reason :: atom}
       def create(fields \\ []), do: Kvasir.Event.Encoding.create(__MODULE__, Map.new(fields))
 
       @doc ~S"""
@@ -210,7 +210,7 @@ defmodule Kvasir.Event do
       iex> create!(field: :value)
       ```
       """
-      @spec create!(Keyword.t()) :: Event.t() | no_return
+      @spec create!(Keyword.t()) :: Kvasir.Event.t() | no_return
       def create!(fields \\ []) do
         case create(fields) do
           {:ok, event} -> event
