@@ -14,8 +14,8 @@ defmodule Kvasir.Key do
   @callback name :: String.t()
   @callback parse(value :: any, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
   @callback dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
-  @callback partition(value :: term, opts :: Keyword.t()) ::
-              {:ok, term} | :obfuscate | {:error, atom}
+  @callback partition(value :: term, partitions :: pos_integer) ::
+              {:ok, non_neg_integer} | {:error, atom}
   @callback obfuscate(value :: term, opts :: Keyword.t()) ::
               {:ok, term} | :obfuscate | {:error, atom}
 
