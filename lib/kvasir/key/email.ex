@@ -6,5 +6,5 @@ defmodule Kvasir.Key.Email do
 
   @impl Kvasir.Key
   def partition(value, partitions),
-    do: value |> String.to_charlist() |> Enum.sum() |> rem(partitions)
+    do: {:ok, value |> String.to_charlist() |> Enum.sum() |> rem(partitions)}
 end

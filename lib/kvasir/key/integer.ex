@@ -5,5 +5,5 @@ defmodule Kvasir.Key.Integer do
   use Kvasir.Key, type: Kvasir.Type.PosInteger
 
   @impl Kvasir.Key
-  def partition(value, partitions), do: rem(value, partitions)
+  def partition(value, partitions), do: {:ok, rem(value, partitions)}
 end
