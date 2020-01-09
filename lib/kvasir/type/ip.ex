@@ -1,6 +1,6 @@
 defmodule Kvasir.Type.IP do
   @moduledoc ~S"""
-
+  An IPv4 or IPv6 address.
   """
   use Kvasir.Type
 

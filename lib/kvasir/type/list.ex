@@ -1,6 +1,8 @@
 defmodule Kvasir.Type.List do
   @moduledoc ~S"""
+  A list (or array) of elements.
 
+  Each element in the array is type checked.
   """
   use Kvasir.Type
 

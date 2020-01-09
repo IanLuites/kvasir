@@ -1,6 +1,6 @@
 defmodule Kvasir.Type.String do
   @moduledoc ~S"""
-
+  Any valid printable string.
   """
   use Kvasir.Type
 

@@ -1,6 +1,8 @@
 defmodule Kvasir.Type.Timestamp do
   @moduledoc ~S"""
+  A timestamp containing date and time.
 
+  By default the timestamp is UTC only.
   """
   use Kvasir.Type
 
