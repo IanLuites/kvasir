@@ -29,7 +29,8 @@ defmodule Kvasir.MixProject do
       homepage_url: "https://github.com/IanLuites/kvasir",
       docs: [
         main: "readme",
-        extras: ["README.md"]
+        extras: ["README.md"],
+        source_url: "https://github.com/IanLuites/kvasir"
       ]
     ]
   end
