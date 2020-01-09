@@ -96,11 +96,12 @@ defmodule Kvasir.EventSource do
         with t = %{key: topic_key, partitions: partitions} <-
                __topics__()[topic] || {:error, :unknown_topic} do
           if k = opts[:key] do
-            with {:ok, key} <- topic_key.parse(k, opts) do
+            with {:ok, key} <- topic_key.parse(k, opts),
+                 {:ok, partition} <- topic_key.partition(key, partitions) do
               e =
                 event
                 |> Kvasir.Event.set_key(key)
-                |> Kvasir.Event.set_partition(topic_key.partition(key, partitions))
+                |> Kvasir.Event.set_partition(partition)
                 |> Kvasir.Event.set_topic(topic)
 
               __source__().commit(
