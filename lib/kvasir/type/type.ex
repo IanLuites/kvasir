@@ -23,6 +23,35 @@ defmodule Kvasir.Type do
               {:ok, term} | :obfuscate | {:error, atom}
 
   defmacro __using__(opts \\ []) do
+    config = Mix.Project.config()
+    app = Keyword.get(config, :app)
+    version = Keyword.get(config, :version)
+    docs = Keyword.get(config, :docs, [])
+    package = Keyword.get(config, :package, [])
+    dep_depth = config |> Keyword.get(:deps_path) |> Path.split() |> Enum.count()
+    path = __CALLER__.file |> Path.split() |> Enum.slice((dep_depth + 1)..-1) |> Path.join()
+
+    {hex, hexdocs} =
+      case {Keyword.get(package, :name), Keyword.get(package, :organization)} do
+        {nil, _} ->
+          nil
+
+        {app, nil} ->
+          {"https://hex.pm/packages/#{app}/#{version}",
+           "https://hexdocs.pm/#{app}/#{version}/#{inspect(__CALLER__.module)}.html"}
+
+        {app, org} ->
+          {"https://hex.pm/packages/#{org}/#{app}/#{version}",
+           "https://#{org}.hexdocs.pm/#{app}/#{version}/#{inspect(__CALLER__.module)}.html"}
+      end
+
+    source =
+      case {Keyword.get(docs, :source_url), Keyword.get(docs, :source_ref)} do
+        {nil, _} -> nil
+        {url, nil} -> url <> "/src/#{path}"
+        {url, ref} -> url <> "/src/#{ref}/#{path}"
+      end
+
     name =
       if n = opts[:name],
         do: n,
@@ -56,6 +85,11 @@ defmodule Kvasir.Type do
       @doc false
       @spec __type__(atom) :: term
       def __type__(:name), do: unquote(name)
+      def __type__(:app), do: {unquote(app), unquote(version)}
+      def __type__(:doc), do: @shared_doc
+      def __type__(:hex), do: unquote(hex)
+      def __type__(:hexdocs), do: unquote(hexdocs)
+      def __type__(:source), do: unquote(source)
 
       defoverridable parse: 2, dump: 2, obfuscate: 2
     end
