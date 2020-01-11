@@ -2,8 +2,23 @@ defmodule Kvasir.Offset do
   defstruct partitions: %{}
 
   def create, do: %__MODULE__{}
-  def create(offset), do: %__MODULE__{partitions: %{0 => offset}}
+  def create(offset) when is_integer(offset), do: %__MODULE__{partitions: %{0 => offset}}
+  def create(partitions), do: %__MODULE__{partitions: partitions}
   def create(partition, offset), do: %__MODULE__{partitions: %{partition => offset}}
+
+  def chunk(offset, chunks \\ 0)
+  def chunk(offset, 0), do: chunk_every(offset, 1)
+  def chunk(offset, 1), do: offset
+
+  def chunk(offset = %__MODULE__{partitions: p}, chunks) do
+    chunk_every(offset, trunc(Float.ceil(map_size(p) / chunks)))
+  end
+
+  def chunk_every(%__MODULE__{partitions: partitions}, every) do
+    partitions
+    |> Enum.chunk_every(every)
+    |> Enum.map(&%Kvasir.Offset{partitions: Map.new(&1)})
+  end
 
   def get(%__MODULE__{partitions: p}, partition), do: p[partition] || 0
 
@@ -29,18 +44,72 @@ defmodule Kvasir.Offset do
     %{o | partitions: p}
   end
 
-  def compare(%__MODULE__{partitions: p0}, %__MODULE__{partitions: p1}) do
-    Enum.reduce_while(p0, :eq, fn {k, v0}, acc ->
-      v1 = p1[k]
+  @doc ~S"""
 
-      cond do
-        is_nil(v1) -> {:cont, acc}
-        v0 < v1 -> if acc != :gt, do: {:cont, :lt}, else: {:halt, :mixed}
-        v0 > v1 -> if acc != :lt, do: {:cont, :gt}, else: {:halt, :mixed}
-        v0 == v1 -> if acc == :eq, do: {:cont, :eq}, else: {:halt, :mixed}
+  ## Examples
+
+  ```elixir
+  iex> a = create(%{0 => 24, 1 => 37})
+  iex> b = create(%{0 => 24, 1 => 37})
+  iex> compare(a, b)
+  :eq
+  ```
+
+  ```elixir
+  iex> a = create(%{0 => 12, 1 => 23})
+  iex> b = create(%{0 => 24, 1 => 37})
+  iex> compare(a, b)
+  :lt
+  ```
+
+  ```elixir
+  iex> a = create(%{0 => 24, 1 => 37})
+  iex> b = create(%{0 => 12, 1 => 23})
+  iex> compare(a, b)
+  :gt
+  ```
+
+  Using `:earliest`:
+  ```elixir
+  iex> a = create(%{0 => :earliest})
+  iex> b = create(%{0 => 0})
+  iex> compare(a, b)
+  :lt
+
+  iex> a = create(%{0 => :earliest})
+  iex> b = create(%{0 => :earliest})
+  iex> compare(a, b)
+  :eq
+  ```
+
+  """
+  def compare(partition_a, partition_b) do
+    p0 = partitions(partition_a)
+    p1 = partitions(partition_b)
+
+    Enum.reduce_while(p0, :eq, fn {k, v0}, acc ->
+      case compare_value(v0, p1[k]) do
+        nil -> {:cont, acc}
+        :eq when acc == :eq -> {:cont, :eq}
+        :lt when acc != :gt -> {:cont, :lt}
+        :gt when acc != :lt -> {:cont, :gt}
+        _ -> {:halt, :mixed}
       end
     end)
   end
+
+  defp partitions(%__MODULE__{partitions: p}), do: p
+  defp partitions(p), do: p
+
+  defp compare_value(a, b)
+  defp compare_value(nil, _), do: nil
+  defp compare_value(_, nil), do: nil
+  defp compare_value(eq, eq), do: :eq
+  defp compare_value(:earliest, _), do: :lt
+  defp compare_value(_, :earliest), do: :gt
+  defp compare_value(:latest, _), do: :gt
+  defp compare_value(_, :latest), do: :lt
+  defp compare_value(a, b), do: if(a < b, do: :lt, else: :gt)
 
   defimpl Jason.Encoder, for: __MODULE__ do
     alias Jason.Encoder.Map

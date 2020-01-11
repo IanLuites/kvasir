@@ -1,6 +1,8 @@
 defmodule Kvasir.OffsetTest do
   use ExUnit.Case, async: true
   alias Kvasir.Offset
+  import Offset
+  doctest Offset
 
   describe "compare/2" do
     test "eq when exactly the same" do
@@ -60,17 +62,17 @@ defmodule Kvasir.OffsetTest do
     end
   end
 
-  describe "compare/2 with :earliest" do
-    test "eq (earliest to earliest)" do
-      assert Offset.compare(:earliest, :earliest) == :eq
-    end
+  # describe "compare/2 with :earliest" do
+  #   test "eq (earliest to earliest)" do
+  #     assert Offset.compare(:earliest, :earliest) == :eq
+  #   end
 
-    test "lt (earliest to any)" do
-      assert Offset.compare(:earliest, Offset.create(%{0 => 1})) == :lt
-    end
+  #   test "lt (earliest to any)" do
+  #     assert Offset.compare(:earliest, Offset.create(%{0 => 1})) == :lt
+  #   end
 
-    test "gt (any to earliest)" do
-      assert Offset.compare(Offset.create(%{0 => 1}), :earliest) == :gt
-    end
-  end
+  #   test "gt (any to earliest)" do
+  #     assert Offset.compare(Offset.create(%{0 => 1}), :earliest) == :gt
+  #   end
+  # end
 end
