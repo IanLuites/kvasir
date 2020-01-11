@@ -109,7 +109,8 @@ defmodule Kvasir.Type do
     non_neg_integer: __MODULE__.NonNegInteger,
     pos_integer: __MODULE__.PosInteger,
     string: __MODULE__.String,
-    timestamp: __MODULE__.Timestamp
+    timestamp: __MODULE__.Timestamp,
+    uri: __MODULE__.URI
   }
 
   @doc ~S"""
