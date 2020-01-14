@@ -55,6 +55,12 @@ defmodule Kvasir.Type.Enum do
       def dump(value, opts \\ [])
       unquote(dump)
 
+      @doc ~S"""
+      List all possible values for the given enum.
+      """
+      @spec values :: [atom]
+      def values, do: unquote(Enum.map(all, &elem(&1, 0)))
+
       @doc false
       @spec __enum__ :: [{term, term, Keyword.t()}]
       def __enum__, do: unquote(Macro.escape(all))
