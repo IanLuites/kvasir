@@ -55,8 +55,15 @@ defmodule Kvasir.Type.Enum do
       def dump(value, opts \\ [])
       unquote(dump)
 
-      @doc ~S"""
+      @doc """
       List all possible values for the given enum.
+
+      ## Example
+
+      ```elixir
+      iex> values()
+      #{unquote(inspect(Enum.map(all, &elem(&1, 0))))}
+      ```
       """
       @spec values :: [atom]
       def values, do: unquote(Enum.map(all, &elem(&1, 0)))
