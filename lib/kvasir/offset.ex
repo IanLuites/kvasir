@@ -1,4 +1,6 @@
 defmodule Kvasir.Offset do
+  @type partition_offset :: :earliest | :latest | pos_integer
+
   defstruct partitions: %{}
 
   def create, do: %__MODULE__{}
@@ -112,6 +114,19 @@ defmodule Kvasir.Offset do
   defp compare_value(:latest, _), do: :gt
   defp compare_value(_, :latest), do: :lt
   defp compare_value(a, b), do: if(a < b, do: :lt, else: :gt)
+
+  @doc ~S"""
+  Compare two partition offset values and return the lowest. (earliest)
+  """
+  @spec min(partition_offset, partition_offset) :: partition_offset
+  def min(offset_a, offset_b) do
+    case compare_value(offset_a, offset_b) do
+      nil -> nil
+      :eq -> offset_a
+      :lt -> offset_a
+      :gt -> offset_b
+    end
+  end
 
   defimpl Jason.Encoder, for: __MODULE__ do
     alias Jason.Encoder.Map
