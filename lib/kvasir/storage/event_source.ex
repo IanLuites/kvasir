@@ -278,6 +278,10 @@ defmodule Kvasir.EventSource do
     end
   end
 
+  def subscribe(source, topic, callback_module, opts) do
+    source.__source__().subscribe(Module.concat(source, Source), topic, callback_module, opts)
+  end
+
   def stream(source, topic, opts) do
     # raise "Check ColdStorage and EventStorage for criteria."
 
