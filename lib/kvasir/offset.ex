@@ -83,7 +83,7 @@ defmodule Kvasir.Offset do
   ```
 
   """
-  def compare(partition_a, partition_b) do
+  def compare(partition_a, partition_b) when is_map(partition_a) and is_map(partition_b) do
     p0 = partitions(partition_a)
     p1 = partitions(partition_b)
 
@@ -97,6 +97,8 @@ defmodule Kvasir.Offset do
       end
     end)
   end
+
+  def compare(offset_a, offset_b), do: compare_value(offset_a, offset_b)
 
   defp partitions(%__MODULE__{partitions: p}), do: p
   defp partitions(p), do: p
