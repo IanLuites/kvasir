@@ -232,20 +232,6 @@ defmodule Kvasir.EventSource do
       )
 
     quote do
-      unquote(
-        Enum.reduce(
-          setup.events,
-          nil,
-          &quote do
-            unquote(&2)
-            require unquote(&1)
-          end
-        )
-      )
-
-      unquote(lookup)
-      def unquote(:"#{topic}_event_lookup")(_), do: nil
-
       Module.put_attribute(
         __MODULE__,
         :topics,
@@ -275,6 +261,21 @@ defmodule Kvasir.EventSource do
            end
          end)}
       )
+
+      unquote(
+        Enum.reduce(
+          setup.events,
+          nil,
+          &quote do
+            unquote(&2)
+            require unquote(&1)
+          end
+        )
+      )
+
+      @doc false
+      unquote(lookup)
+      def unquote(:"#{topic}_event_lookup")(_), do: nil
     end
   end
 
