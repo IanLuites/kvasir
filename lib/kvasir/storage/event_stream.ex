@@ -1,5 +1,6 @@
 defmodule EventStream do
-  defstruct ~w(source topic id partition from events)a
+
+  defstruct ~w(source topic id partition from events)a ++ [endless: false]
 
   def start(stream, opts \\ []) do
     pid = opts[:pid] || self()
@@ -41,13 +42,42 @@ defmodule EventStream do
       {acc_t, acc_v} = acc
       acc = {acc_t, {Kvasir.Offset.create(), acc_v}}
 
-      {_t, {_offset, cold}} =
+      {_t, {offset, cold}} =
         source.__storages__()
-        |> storages(es.topic, nil)
+        |> storages(es.topic, es.from)
         |> Kernel.++([{source.__source__(), Module.concat(source, Source)}])
         |> cold_storage(es, acc, fun_x)
 
-      {:done, cold}
+      if es.endless do
+        streaming = self()
+
+        o =
+          if offset.partitions == %{} and (es.from && es.from.partitions != %{}),
+            do: es.from,
+            else: offset
+
+        source.listen(
+          es.topic.topic,
+          fn event ->
+            send(streaming, {:event, event})
+            :ok
+          end,
+          from: o
+        )
+
+        listen(fun, {:cont, cold})
+      else
+        {:done, cold}
+      end
+    end
+
+    defp listen(fun, acc) do
+      state =
+        receive do
+          {:event, e} -> fun.(e, acc)
+        end
+
+      listen(fun, state)
     end
 
     defp storages(storages, topic, from, acc \\ [])
@@ -69,7 +99,12 @@ defmodule EventStream do
         cold_storage(tail, es, acc, fun)
       else
         {:ok, stream} =
-          cold.stream(name, es.topic, from: es.from, id: es.id, partition: es.partition)
+          cold.stream(name, es.topic,
+            from: es.from,
+            id: es.id,
+            partition: es.partition,
+            events: es.events
+          )
 
         {type, {new_acc, o}} =
           case Enumerable.reduce(stream, acc, fun) do
@@ -89,9 +124,13 @@ defmodule EventStream do
 
           :default ->
             tt = if(type == :done, do: :cont, else: type)
-            o2 = Kvasir.Offset.bump_merge(es.from, o)
 
-            cold_storage(tail, %{es | from: o2}, {tt, new_acc}, fun)
+            if o.partitions == %{} do
+              cold_storage(tail, es, {tt, new_acc}, fun)
+            else
+              o2 = Kvasir.Offset.bump_merge(es.from, o)
+              cold_storage(tail, %{es | from: o2}, {tt, new_acc}, fun)
+            end
         end
       end
     end
@@ -100,7 +139,7 @@ defmodule EventStream do
   defimpl Inspect, for: __MODULE__ do
     import Inspect.Algebra
 
-    def inspect(%{topic: topic, id: id, partition: partition, from: from}, opts) do
+    def inspect(%{topic: topic, id: id, partition: partition, from: from, endless: e}, opts) do
       filter =
         Enum.reject(
           [
@@ -111,11 +150,13 @@ defmodule EventStream do
           &is_nil(elem(&1, 1))
         )
 
+      s = if(e, do: "∞", else: "#")
+
       if filter == [] do
-        concat(["#EventStream<", to_doc(topic.topic, opts), ">"])
+        concat([s, "EventStream<", to_doc(topic.topic, opts), ">"])
       else
         f = filter(to_doc(filter, opts))
-        concat(["#EventStream<", to_doc(topic.topic, opts), ",", f, ">"])
+        concat([s, "EventStream<", to_doc(topic.topic, opts), ",", f, ">"])
       end
     end
 
