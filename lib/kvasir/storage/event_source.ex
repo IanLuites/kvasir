@@ -146,6 +146,14 @@ defmodule Kvasir.EventSource do
         end
       end
 
+      def listen(topic, callback, opts \\ []) do
+        if t = __topics__()[topic] do
+          unquote(__MODULE__).listen(__MODULE__, t, callback, opts)
+        else
+          {:error, :unknown_topic}
+        end
+      end
+
       @doc ~S"""
       Stream events from a given topic.
 
@@ -283,6 +291,10 @@ defmodule Kvasir.EventSource do
     source.__source__().subscribe(Module.concat(source, Source), topic, callback_module, opts)
   end
 
+  def listen(source, topic, callback, opts) do
+    source.__source__().listen(Module.concat(source, Source), topic, callback, opts)
+  end
+
   def stream(source, topic, opts) do
     # raise "Check ColdStorage and EventStorage for criteria."
 
@@ -313,7 +325,8 @@ defmodule Kvasir.EventSource do
       id: id,
       partition: opts[:partition],
       from: opts[:from],
-      events: events
+      events: events,
+      endless: opts[:endless] || false
     }
   end
 

@@ -18,6 +18,14 @@ defmodule Kvasir.Source do
 
   @callback subscribe(name :: atom, Kvasir.topic(), opts :: Kvasir.EventSource.stream_opts()) ::
               :ok | {:error, atom}
+  @callback listen(
+              name :: atom,
+              Kvasir.topic(),
+              callback :: (Kvasir.Event.t() -> :ok | {:error, reason :: atom}),
+              opts :: Kvasir.EventSource.stream_opts()
+            ) ::
+              :ok | {:error, atom}
+
   @callback stream(name :: atom, Kvasir.topic(), opts :: Kvasir.EventSource.stream_opts()) ::
               {:ok, Stream.t()} | {:error, atom}
 end
