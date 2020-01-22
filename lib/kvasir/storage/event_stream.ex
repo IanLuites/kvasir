@@ -102,6 +102,7 @@ defmodule EventStream do
           cold.stream(name, es.topic,
             from: es.from,
             id: es.id,
+            key: es.id,
             partition: es.partition,
             events: es.events
           )
