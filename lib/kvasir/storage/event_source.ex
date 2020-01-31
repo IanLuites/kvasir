@@ -123,10 +123,10 @@ defmodule Kvasir.EventSource do
       @doc ~S"""
       Subscribe to a given topic with a module.
 
-      THe module needs to implement both `init/3` and `event/2`.
+      The callback_module needs to implement both `init/3` and `event/2`.
 
       The callbacks are:
-       - `init(topic, partition, projection)` (returns `{:ok, state}`)
+       - `init(topic, partition, opts)` (returns `{:ok, state}`)
        - `event(event, state)` (return `:ok` or `{:ok, state}`)
 
       ## Examples
@@ -146,6 +146,23 @@ defmodule Kvasir.EventSource do
         end
       end
 
+      @doc ~S"""
+      Start listening for new events for a given topic.
+
+      On each incoming event the given `callback` is called
+      with as only input the event.
+
+      The callback must return `:ok` to continue to the next event.
+      All other results will stop the listener.
+
+      ## Examples
+
+      ```elixir
+      iex> listen("users", fn event -> IO.inspect(event); :ok end)
+      {:ok, <pid>}
+      """
+      @spec listen(topic :: String.t(), callback :: fun, opts :: Keyword.t()) ::
+              {:ok, pid} | {:error, atom}
       def listen(topic, callback, opts \\ []) do
         if t = __topics__()[topic] do
           unquote(__MODULE__).listen(__MODULE__, t, callback, opts)
