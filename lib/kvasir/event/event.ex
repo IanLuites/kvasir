@@ -22,7 +22,7 @@ defmodule Kvasir.Event do
     end
 
     quote do
-      import Kvasir.Event, only: [event: 2, upgrade: 2, version: 1, version: 2]
+      import Kvasir.Event, only: [event: 1, event: 2, upgrade: 2, version: 1, version: 2]
       @before_compile Kvasir.Event
       @on_error unquote(on_error)
 
@@ -115,8 +115,11 @@ defmodule Kvasir.Event do
     end
   end
 
-  defmacro event(type, do: block) do
-    {app, version, hex, hexdocs, source} = Kvasir.Util.documentation(__CALLER__)
+  defmacro event(type), do: create_event(__CALLER__, type)
+  defmacro event(type, do: block), do: create_event(__CALLER__, type, block)
+
+  defp create_event(caller, type, block \\ nil) do
+    {app, version, hex, hexdocs, source} = Kvasir.Util.documentation(caller)
 
     quote do
       Module.register_attribute(__MODULE__, :fields, accumulate: true)
@@ -231,19 +234,33 @@ defmodule Kvasir.Event do
               "UNPUBLISHED"
             end
 
-          concat([
-            {:doc_color, :doc_nil, [:reset]},
-            "⊰",
-            inspect(data.__struct__),
-            {:doc_color, :doc_nil, [:italic, :yellow]},
-            "<",
-            offset,
-            ">",
-            {:doc_color, :doc_nil, :reset},
-            remove(to_doc(a, opts)),
-            {:doc_color, :doc_nil, :reset},
-            "⊱"
-          ])
+          if a == %{} do
+            concat([
+              {:doc_color, :doc_nil, [:reset]},
+              "⊰",
+              inspect(data.__struct__),
+              {:doc_color, :doc_nil, [:italic, :yellow]},
+              "<",
+              offset,
+              ">",
+              {:doc_color, :doc_nil, :reset},
+              "⊱"
+            ])
+          else
+            concat([
+              {:doc_color, :doc_nil, [:reset]},
+              "⊰",
+              inspect(data.__struct__),
+              {:doc_color, :doc_nil, [:italic, :yellow]},
+              "<",
+              offset,
+              ">",
+              {:doc_color, :doc_nil, :reset},
+              remove(to_doc(a, opts)),
+              {:doc_color, :doc_nil, :reset},
+              "⊱"
+            ])
+          end
         end
 
         defp remove({a, "%{", c}), do: {a, "{", c}

@@ -1,4 +1,6 @@
 locals_without_parens = [
+  event: 1,
+  event: 2,
   field: 1,
   field: 2,
   field: 3,
