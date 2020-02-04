@@ -1,4 +1,5 @@
 defmodule Kvasir.Topic do
+  @type t :: %__MODULE__{}
   defstruct ~w(topic key partitions events event_lookup)a
 
   defimpl Jason.Encoder, for: __MODULE__ do

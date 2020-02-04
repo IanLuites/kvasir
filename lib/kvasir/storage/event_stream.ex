@@ -1,5 +1,6 @@
 defmodule EventStream do
 
+  @type t :: %__MODULE__{}
   defstruct ~w(source topic id partition from events)a ++ [endless: false]
 
   def start(stream, opts \\ []) do
