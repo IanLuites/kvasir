@@ -1,6 +1,7 @@
 defmodule Kvasir.Offset do
   @type partition_offset :: :earliest | :latest | pos_integer
 
+  @type t :: %__MODULE__{}
   defstruct partitions: %{}
 
   def create, do: %__MODULE__{}
@@ -21,6 +22,12 @@ defmodule Kvasir.Offset do
     |> Enum.chunk_every(every)
     |> Enum.map(&%Kvasir.Offset{partitions: Map.new(&1)})
   end
+
+  @doc ~S"""
+  Check whether an offset is empty.
+  """
+  @spec empty?(t) :: boolean
+  def empty?(%__MODULE__{partitions: p}), do: p == %{}
 
   def get(%__MODULE__{partitions: p}, partition), do: p[partition] || 0
 
