@@ -37,10 +37,29 @@ defmodule Kvasir.EventSource do
         end
       end)
 
+    encryption = Macro.expand(opts[:encryption], __CALLER__) || false
+    compression = Macro.expand(opts[:compression], __CALLER__) || false
+
+    encryption_opts =
+      opt_escape(opts[:encryption_opts], __CALLER__) || {Kvasir.Encryption.AES, []}
+
+    compression_opts =
+      opt_escape(opts[:compression_opts], __CALLER__) || {Kvasir.Compression.ZLib, []}
+
+    Module.put_attribute(__CALLER__.module, :encryption, encryption)
+    Module.put_attribute(__CALLER__.module, :encryption_opts, encryption_opts)
+    Module.put_attribute(__CALLER__.module, :compression, compression)
+    Module.put_attribute(__CALLER__.module, :compression_opts, compression_opts)
+
     quote do
       @before_compile unquote(__MODULE__)
       import unquote(__MODULE__), only: [topic: 2, topic: 3]
       Module.register_attribute(__MODULE__, :topics, accumulate: true)
+
+      @encryption unquote(encryption)
+      @encryption_opts unquote(encryption_opts)
+      @compression unquote(compression)
+      @compression_opts unquote(compression_opts)
 
       @doc false
       @spec child_spec(Keyword.t()) :: map
@@ -217,12 +236,33 @@ defmodule Kvasir.EventSource do
     string: Kvasir.Key.String
   }
 
+  defp opt_escape(nil, _env), do: nil
+
+  defp opt_escape(opt, env) do
+    case Macro.expand(opt, env) do
+      {a, b} -> {Macro.expand(a, env), Macro.expand(b, env)}
+      a -> {Macro.expand(a, env), []}
+    end
+  end
+
   defmacro topic(topic, key_format, opts \\ []) do
     setup = %Kvasir.Topic{
       topic: topic,
       key: Macro.expand(@build_ins[key_format] || key_format, __CALLER__),
       partitions: opts[:partitions] || 4,
-      events: opts |> Keyword.get(:events, []) |> Enum.map(&Macro.expand(&1, __CALLER__))
+      events: opts |> Keyword.get(:events, []) |> Enum.map(&Macro.expand(&1, __CALLER__)),
+      encryption:
+        Macro.expand(opts[:encryption], __CALLER__) ||
+          Module.get_attribute(__CALLER__.module, :encryption),
+      encryption_opts:
+        opt_escape(opts[:encryption_opts], __CALLER__) ||
+          Module.get_attribute(__CALLER__.module, :encryption_opts),
+      compression:
+        Macro.expand(opts[:compression], __CALLER__) ||
+          Module.get_attribute(__CALLER__.module, :compression),
+      compression_opts:
+        opt_escape(opts[:compression_opts], __CALLER__) ||
+          Module.get_attribute(__CALLER__.module, :compression_opts)
     }
 
     lookup =
