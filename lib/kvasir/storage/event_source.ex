@@ -123,20 +123,16 @@ defmodule Kvasir.EventSource do
                 |> Kvasir.Event.set_partition(partition)
                 |> Kvasir.Event.set_topic(topic)
 
-              __source__().commit(
-                unquote(Module.concat(__CALLER__.module, Source)),
-                t,
-                e
-              )
+              commit(t, e)
             end
           else
-            __source__().commit(
-              unquote(Module.concat(__CALLER__.module, Source)),
-              t,
-              event
-            )
+            commit(t, event)
           end
         end
+      end
+
+      defp commit(a, b) do
+        __source__().commit(unquote(Module.concat(__CALLER__.module, Source)), a, b)
       end
 
       @doc ~S"""
