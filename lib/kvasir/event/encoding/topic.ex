@@ -148,8 +148,6 @@ defmodule Kvasir.Event.Encoding.Topic do
            @moduledoc """
            Event encoding and decoding for the `"#{unquote(topic.topic)}"` topic.
            """
-           alias Kvasir.Event.Meta
-           alias Kvasir.Type.Serializer, as: S
            import unquote(decoder), only: [encode: 3, binary_decode: 4, decode: 4]
 
            require unquote(compressor)
@@ -191,8 +189,8 @@ defmodule Kvasir.Event.Encoding.Topic do
            def bin_encode(event)
 
            def bin_encode(event = %t{__meta__: meta}) do
-             with {:ok, m} <- Meta.encode(meta, unquote(key)),
-                  {:ok, p} <- S.encode(t.__event__(:fields), event),
+             with {:ok, m} <- Kvasir.Event.Meta.encode(meta, unquote(key)),
+                  {:ok, p} <- Kvasir.Type.Serializer.encode(t.__event__(:fields), event),
                   unpacked <- if(m == %{}, do: p, else: [m, p]),
                   {:ok, packed} <- Msgpax.pack(unpacked, iodata: false),
                   {:ok, compressed} <- compress(t, packed),
