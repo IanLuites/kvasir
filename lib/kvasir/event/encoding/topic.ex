@@ -1,9 +1,11 @@
 defmodule Kvasir.Event.Encoding.Topic do
+  @spec create(Kvasir.Topic.t(), term) :: term
   def generate(topic, extra \\ nil) do
     {_mod, code} = generate_module(topic, extra: extra, overwrite: true, events: :all)
     code
   end
 
+  @spec create(Kvasir.Topic.t(), Keyword.t()) :: module
   def create(topic, opts \\ []) do
     {mod, code} = generate_module(topic, opts)
 
@@ -16,6 +18,7 @@ defmodule Kvasir.Event.Encoding.Topic do
     mod
   end
 
+  @spec generate_module(Kvasir.Topic.t(), Keyword.t()) :: {module, term}
   defp generate_module(topic, opts) do
     {events, mod} =
       case opts[:only] do
