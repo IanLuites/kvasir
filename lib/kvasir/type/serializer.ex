@@ -16,9 +16,13 @@ defmodule Kvasir.Type.Serializer do
 
   defp do_encode([{field, type, opts} | fields], data, acc) do
     with {:ok, value} when value != nil <- Map.fetch(data, field),
+         false <- value == opts[:default],
          {:ok, encoded} <- type.dump(value, opts) do
       do_encode(fields, data, Map.put(acc, field, encoded))
     else
+      true ->
+        do_encode(fields, data, acc)
+
       {:ok, nil} ->
         do_encode(fields, data, acc)
 
