@@ -96,7 +96,6 @@ defmodule Kvasir.EventSource do
         |> Map.values()
         |> Enum.each(
           &Kvasir.Event.Encoding.Topic.create(
-            __MODULE__,
             &1,
             events: :all,
             overwrite: true,
@@ -111,11 +110,11 @@ defmodule Kvasir.EventSource do
                 ```elixir
                 iex> MySource.MyTopic.filter([MyEvent])
                 MySource.MyTopic.F3227A3894E15B922A187CE92BE2DA902
+                ```
                 """
                 @spec filter([Kvasir.Event.t()]) :: module
                 def filter(events) do
                   Kvasir.Event.Encoding.Topic.create(
-                    unquote(__MODULE__),
                     unquote(Macro.escape(&1)),
                     overwrite: false,
                     only: events
@@ -276,6 +275,12 @@ defmodule Kvasir.EventSource do
 
   defmacro topic(topic, key_format, opts \\ []) do
     setup = %Kvasir.Topic{
+      module:
+        topic
+        |> String.split(".")
+        |> Enum.map(&Macro.camelize/1)
+        |> Enum.join(".")
+        |> (&Module.concat(__CALLER__.module, &1)).(),
       topic: topic,
       key: Macro.expand(@build_ins[key_format] || key_format, __CALLER__),
       partitions: opts[:partitions] || 4,
@@ -373,7 +378,6 @@ defmodule Kvasir.EventSource do
 
       unquote(
         Kvasir.Event.Encoding.Topic.generate(
-          __CALLER__.module,
           setup,
           quote do
             @doc ~S"""
@@ -385,11 +389,11 @@ defmodule Kvasir.EventSource do
             ```elixir
             iex> MySource.MyTopic.filter([MyEvent])
             MySource.MyTopic.F3227A3894E15B922A187CE92BE2DA902
+            ```
             """
             @spec filter([Kvasir.Event.t()]) :: module
             def filter(events) do
               Kvasir.Event.Encoding.Topic.create(
-                unquote(__CALLER__.module),
                 unquote(Macro.escape(setup)),
                 overwrite: false,
                 only: events

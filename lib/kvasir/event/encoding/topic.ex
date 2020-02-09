@@ -1,22 +1,11 @@
 defmodule Kvasir.Event.Encoding.Topic do
-  def generate(source, topic, extra \\ nil) do
-    topic.topic
-    |> String.split(".")
-    |> Enum.map(&Macro.camelize/1)
-    |> Enum.join(".")
-    |> (&Module.concat(source, &1)).()
-    |> generate_module(topic, extra: extra, overwrite: true, events: :all)
-    |> elem(1)
+  def generate(topic, extra \\ nil) do
+    {_mod, code} = generate_module(topic, extra: extra, overwrite: true, events: :all)
+    code
   end
 
-  def create(source, topic, opts \\ []) do
-    {mod, code} =
-      topic.topic
-      |> String.split(".")
-      |> Enum.map(&Macro.camelize/1)
-      |> Enum.join(".")
-      |> (&Module.concat(source, &1)).()
-      |> generate_module(topic, opts)
+  def create(topic, opts \\ []) do
+    {mod, code} = generate_module(topic, opts)
 
     if code do
       Code.compiler_options(ignore_module_conflict: true)
@@ -27,17 +16,18 @@ defmodule Kvasir.Event.Encoding.Topic do
     mod
   end
 
-  defp generate_module(module, topic, opts) do
+  defp generate_module(topic, opts) do
     {events, mod} =
       case opts[:only] do
         all when all in [nil, :all] ->
-          {topic.events, module}
+          {topic.events, topic.module}
 
-        es ->
+        e ->
+          es = if(is_list(e), do: e, else: [e])
           types = es |> Enum.map(& &1.__event__(:type)) |> Enum.sort()
           hash = :md5 |> :crypto.hash(types) |> Base.encode16()
 
-          {es, Module.concat(module, "F" <> hash)}
+          {es, Module.concat(topic.module, "F" <> hash)}
       end
 
     if not Keyword.get(opts, :overwrite, false) and Code.ensure_loaded?(mod) do
