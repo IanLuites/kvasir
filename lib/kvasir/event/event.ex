@@ -25,6 +25,7 @@ defmodule Kvasir.Event do
       import Kvasir.Event, only: [event: 1, event: 2, upgrade: 2, version: 1, version: 2]
       @before_compile Kvasir.Event
       @on_error unquote(on_error)
+      @compress unquote(opts[:compress] || false)
 
       # Version Tracking
       Module.register_attribute(__MODULE__, :version, persist: true, accumulate: true)
@@ -159,6 +160,7 @@ defmodule Kvasir.Event do
       def __event__(:hex), do: unquote(hex)
       def __event__(:hexdocs), do: unquote(hexdocs)
       def __event__(:source), do: unquote(source)
+      def __event__(:compress), do: @compress
 
       @field_type Map.new(@fields, fn {k, v, _} -> {k, v} end)
       @doc false
