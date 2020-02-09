@@ -65,6 +65,7 @@ defmodule Kvasir.MixProject do
     [
       {:common_x, "~> 0.2.0"},
       {:jason, "~> 1.1"},
+      {:msgpax, "~> 2.2"},
       {:utc_datetime, "~> 0.0.7"},
       {:analyze, "~> 0.1.10", optional: true, runtime: false, only: [:dev, :test]}
     ]
