@@ -53,4 +53,19 @@ defmodule Kvasir.Event.Encoding do
 
   def create(event, data, opts \\ []),
     do: decode(event, nil, %{version: to_string(event.__event__(:version)), payload: data}, opts)
+
+  def binary_decode(event, key, version, packed) do
+    unpacked =
+      case Msgpax.unpack(packed) do
+        {:ok, [m, p]} -> {:ok, {m, p}}
+        {:ok, p} -> {:ok, {%{}, p}}
+        err -> err
+      end
+
+    with {:ok, {m, p}} <- unpacked,
+         {:ok, meta} <- Meta.decode(m, key),
+         {:ok, payload} <- event.upgrade(version, p),
+         {:ok, e} <- S.decode(event.__event__(:fields), payload),
+         do: {:ok, %{struct!(event, e) | __meta__: %{meta | key_type: key}}}
+  end
 end
