@@ -8,7 +8,8 @@ defmodule Kvasir.Encryption.AES do
       iv = :crypto.strong_rand_bytes(16)
 
       {:ok,
-       iv <> :crypto.crypto_one_time(unquote(cipher), unquote(key), iv, unquote(data), false)}
+       <<0>> <>
+         iv <> :crypto.crypto_one_time(unquote(cipher), unquote(key), iv, unquote(data), false)}
     end
   end
 
@@ -17,7 +18,7 @@ defmodule Kvasir.Encryption.AES do
 
     quote do
       case unquote(data) do
-        <<iv::binary-size(16), data::binary>> ->
+        <<0, iv::binary-size(16), data::binary>> ->
           try do
             {:ok, :crypto.crypto_one_time(unquote(cipher), unquote(key), iv, data, true)}
           rescue
