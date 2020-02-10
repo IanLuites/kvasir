@@ -74,11 +74,17 @@ defmodule Kvasir.EventSource do
       @spec start_link(Keyword.t()) ::
               {:ok, pid} | {:error, {:already_started, pid} | {:shutdown, term} | term}
       def start_link(opts \\ []) do
+        topics =
+          case opts[:topics] do
+            nil -> __topics__()
+            filter -> Map.take(__topics__(), filter)
+          end
+
         opts =
           Keyword.put(
             opts,
             :initialize,
-            Map.new(__topics__(), fn {k, v} -> {k, v.partitions} end)
+            Map.new(topics, fn {k, v} -> {k, v.partitions} end)
           )
 
         children =
