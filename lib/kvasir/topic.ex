@@ -8,7 +8,7 @@ defmodule Kvasir.Topic do
     def encode(value, opts) do
       value
       |> Map.from_struct()
-      |> Map.delete(:event_lookup)
+      |> Map.drop(~w(event_lookup encryption_opts compression_opts)a)
       |> JMap.encode(opts)
     end
   end
