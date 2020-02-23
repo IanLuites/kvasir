@@ -15,9 +15,8 @@ defmodule Kvasir.Storage.Freezer do
       end
 
       @doc false
-      @spec start_link ::
-              {:ok, pid}
-              | def(start_link) do
+      @spec start_link :: {:ok, pid} | {:error, term}
+      def start_link do
         unquote(source).subscribe(unquote(topic), __MODULE__, group: inspect(__MODULE__))
       end
 
