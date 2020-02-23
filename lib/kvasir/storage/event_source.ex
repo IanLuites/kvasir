@@ -32,7 +32,10 @@ defmodule Kvasir.EventSource do
         quote do
           unquote(m).child_spec(
             unquote(Module.concat(__CALLER__.module, :"Source#{index + 1}")),
-            Keyword.merge(unquote(o), opts)
+            config(
+              unquote(opts[:label] || :"storage#{index + 1}"),
+              Keyword.merge(unquote(o), opts)
+            )
           )
         end
       end)
