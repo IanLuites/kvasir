@@ -283,11 +283,8 @@ defmodule Kvasir.Event do
   def event?(event) when is_atom(event), do: :erlang.function_exported(event, :__event__, 1)
   def event?(_), do: false
 
-  @unix ~N[1970-01-01 00:00:00]
-  @spec timestamp(t) :: NaiveDateTime.t()
-  def timestamp(%{__meta__: %{ts: ts}}) when is_integer(ts),
-    do: NaiveDateTime.add(@unix, ts, :millisecond)
-
+  @spec timestamp(t) :: UTCDateTime.t()
+  def timestamp(%{__meta__: %{timestamp: ts}}), do: ts
   def timestamp(_), do: nil
 
   @spec id(t) :: term

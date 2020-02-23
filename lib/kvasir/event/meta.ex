@@ -5,7 +5,7 @@ defmodule Kvasir.Event.Meta do
           partition: non_neg_integer,
           offset: non_neg_integer,
           key: String.t(),
-          timestamp: NaiveDateTime.t(),
+          timestamp: UTCDateTime.t(),
           meta: map
         }
 
