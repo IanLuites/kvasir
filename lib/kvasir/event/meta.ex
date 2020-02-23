@@ -17,8 +17,7 @@ defmodule Kvasir.Event.Meta do
     :key,
     :key_type,
     :timestamp,
-    :meta,
-    :command
+    :meta
   ]
 
   defimpl Inspect do
@@ -32,6 +31,7 @@ defmodule Kvasir.Event.Meta do
     meta
     |> Map.from_struct()
     |> Map.delete(:key_type)
+    |> Map.update(:timestamp, nil, &ts_encode/1)
     |> Enum.reject(&nil_value/1)
     |> Enum.into(%{})
   end
@@ -46,6 +46,7 @@ defmodule Kvasir.Event.Meta do
       data
       |> Enum.reject(&nil_value/1)
       |> Enum.into(%{}, &atomize/1)
+      |> Map.update(:timestamp, nil, &ts_decode/1)
     )
   end
 
@@ -69,6 +70,12 @@ defmodule Kvasir.Event.Meta do
       meta = %{key: k} -> with {:ok, k} <- key.parse(k, []), do: {:ok, %{meta | key: k}}
     end
   end
+
+  defp ts_decode(nil), do: nil
+  defp ts_decode(v), do: UTCDateTime.from_unix!(v, :millisecond)
+
+  defp ts_encode(nil), do: nil
+  defp ts_encode(v), do: UTCDateTime.to_unix(v, :millisecond)
 
   defp atomize(e = {k, _}) when is_atom(k), do: e
   defp atomize({k, v}), do: {String.to_existing_atom(k), v}
