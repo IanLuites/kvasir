@@ -50,8 +50,10 @@ defmodule Kvasir.EventSource do
     Module.put_attribute(__CALLER__.module, :encryption_opts, encryption_opts)
     Module.put_attribute(__CALLER__.module, :compression, compression)
     Module.put_attribute(__CALLER__.module, :compression_opts, compression_opts)
+    Module.put_attribute(__CALLER__.module, :cold_storages, cold_storages)
 
     quote do
+      @after_compile unquote(__MODULE__)
       @before_compile unquote(__MODULE__)
       import unquote(__MODULE__), only: [topic: 2, topic: 3]
       Module.register_attribute(__MODULE__, :topics, accumulate: true)
@@ -190,7 +192,7 @@ defmodule Kvasir.EventSource do
       ```
       """
       @spec subscribe(topic :: String.t(), callback_module :: module, opts :: Keyword.t()) ::
-              :ok | {:error, atom}
+              {:ok, pid} | {:error, atom}
       def subscribe(topic, callback_module, opts \\ []) do
         if t = __topics__()[topic] do
           unquote(__MODULE__).subscribe(__MODULE__, t, callback_module, opts)
@@ -266,6 +268,34 @@ defmodule Kvasir.EventSource do
     end
   end
 
+  def __after_compile__(env, _bytecode) do
+    freezers =
+      env.module.__topics__
+      |> Map.values()
+      |> Enum.filter(& &1.freeze)
+      |> Enum.map(fn %{module: m} -> Module.concat(m, "Freezer") end)
+
+    Code.compile_quoted(
+      quote do
+        defmodule unquote(Module.concat(env.module, "Freezer")) do
+          @moduledoc ~S"""
+          Copy events to cold storage.
+          """
+
+          @doc false
+          @spec child_spec(Keyword.t()) :: map
+          def child_spec(_opts \\ []) do
+            %{id: __MODULE__, start: {__MODULE__, :start_link, []}}
+          end
+
+          @doc false
+          @spec start_link :: {:ok, pid}
+          def start_link, do: Supervisor.start_link(unquote(freezers), strategy: :one_for_one)
+        end
+      end
+    )
+  end
+
   @build_ins %{
     string: Kvasir.Key.String
   }
@@ -305,6 +335,63 @@ defmodule Kvasir.EventSource do
         opt_escape(opts[:compression_opts], __CALLER__) ||
           Module.get_attribute(__CALLER__.module, :compression_opts)
     }
+
+    cold_topics =
+      __CALLER__.module
+      |> Module.get_attribute(:cold_storages)
+      |> Enum.map(fn {_, cold} ->
+        Module.concat([
+          setup.module,
+          "Freezer",
+          String.trim_leading(inspect(cold), inspect(__CALLER__.module) <> ".")
+        ])
+      end)
+
+    freezers =
+      if setup.freeze do
+        __CALLER__.module
+        |> Module.get_attribute(:cold_storages)
+        |> Enum.reduce(
+          quote do
+            defmodule unquote(Module.concat(setup.module, "Freezer")) do
+              @moduledoc ~S"""
+              Copy events to cold storage.
+              """
+
+              @doc false
+              @spec child_spec(Keyword.t()) :: map
+              def child_spec(_opts \\ []) do
+                %{id: __MODULE__, start: {__MODULE__, :start_link, []}}
+              end
+
+              @doc false
+              @spec start_link :: {:ok, pid}
+              def start_link,
+                do: Supervisor.start_link(unquote(cold_topics), strategy: :one_for_one)
+            end
+          end,
+          fn s = {_, cold}, acc ->
+            mod =
+              Module.concat([
+                setup.module,
+                "Freezer",
+                String.trim_leading(inspect(cold), inspect(__CALLER__.module) <> ".")
+              ])
+
+            quote do
+              unquote(acc)
+
+              defmodule unquote(mod) do
+                @moduledoc false
+                use Kvasir.Storage.Freezer,
+                  source: unquote(__CALLER__.module),
+                  topic: unquote(topic),
+                  storage: unquote(s)
+              end
+            end
+          end
+        )
+      end
 
     lookup =
       Enum.reduce(
@@ -409,6 +496,8 @@ defmodule Kvasir.EventSource do
           end
         )
       )
+
+      unquote(freezers)
     end
   end
 
