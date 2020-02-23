@@ -17,7 +17,7 @@ defmodule Kvasir.Source do
   @callback contains?(name :: atom, Kvasir.topic(), Kvasir.Offset.t()) :: :maybe | true | false
 
   @callback subscribe(name :: atom, Kvasir.topic(), opts :: Kvasir.EventSource.stream_opts()) ::
-              :ok | {:error, atom}
+              {:ok, pid} | {:error, atom}
   @callback listen(
               name :: atom,
               Kvasir.topic(),
