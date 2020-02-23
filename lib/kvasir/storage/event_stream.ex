@@ -1,4 +1,8 @@
 defmodule EventStream do
+  defmodule State do
+    @enforce_keys ~w(source topic id partition from events)a
+    defstruct @enforce_keys ++ [endless: false]
+  end
 
   @type t :: %__MODULE__{}
   defstruct ~w(source topic id partition from events)a ++ [endless: false]

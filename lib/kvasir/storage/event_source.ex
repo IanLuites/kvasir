@@ -103,6 +103,20 @@ defmodule Kvasir.EventSource do
               ]).()
           |> Enum.reject(&(&1 == false))
 
+        ### Testings
+
+        # Code.compile_quoted(
+        #   quote do
+        #     defmodule unquote(__MODULE__.Metrics.Resolver) do
+        #       def host, do: {{127, 0, 0, 1}, 9125}
+        #     end
+        #   end
+        # )
+
+        # children = [Kvasir.Metrics.Dispatcher.child_spec(source: __MODULE__) | children]
+
+        ### Testing
+
         __topics__()
         |> Map.values()
         |> Enum.each(
@@ -177,6 +191,35 @@ defmodule Kvasir.EventSource do
       defp commit(a, b) do
         __source__().commit(unquote(Module.concat(__CALLER__.module, Source)), a, b)
       end
+
+      # defp commit(a, b) do
+      #   with {:ok, e} <-
+      #          __source__().commit(unquote(Module.concat(__CALLER__.module, Source)), a, b) do
+      #     # metric = [
+      #     #   "event|",
+      #     #   e.__struct__.__event__(:type),
+      #     #   "|",
+      #     #   e.__meta__.topic,
+      #     #   ":",
+      #     #   to_string(e.__meta__.partition),
+      #     #   ":",
+      #     #   to_string(e.__meta__.offset),
+      #     #   "|",
+      #     #   "key:#{Kvasir.Event.key(e)}"
+      #     # ]
+
+      #     # :poolboy.transaction(
+      #     #   __MODULE__.Metrics,
+      #     #   &GenServer.cast(&1, {:metric, metric}),
+      #     #   5000
+      #     # )
+      #     # |> IO.inspect()
+
+      #     # IO.puts(["========\n", metric, "\n========"])
+
+      #     {:ok, e}
+      #   end
+      # end
 
       @doc ~S"""
       Subscribe to a given topic with a module.

@@ -12,10 +12,14 @@ defmodule Kvasir.Key do
   Key descriptive name.
   """
   @callback name :: String.t()
+  @callback parse(value :: any) :: {:ok, term} | {:error, atom}
   @callback parse(value :: any, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
+  @callback dump(value :: term) :: {:ok, term} | {:error, atom}
   @callback dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
   @callback partition(value :: term, partitions :: pos_integer) ::
               {:ok, non_neg_integer} | {:error, atom}
+  @callback obfuscate(value :: term) ::
+              {:ok, term} | :obfuscate | {:error, atom}
   @callback obfuscate(value :: term, opts :: Keyword.t()) ::
               {:ok, term} | :obfuscate | {:error, atom}
 
@@ -83,8 +87,53 @@ defmodule Kvasir.Key do
       def __key__(:hexdocs), do: unquote(hexdocs)
       def __key__(:source), do: unquote(source)
 
+      ### No Ops ###
+
+      @spec parse(value :: any) :: {:ok, term} | {:error, atom}
+      @impl unquote(__MODULE__)
+      def parse(value), do: parse(value, [])
+
+      @spec dump(value :: term) :: {:ok, term} | {:error, atom}
+      @impl unquote(__MODULE__)
+      def dump(value), do: dump(value, [])
+
+      @spec obfuscate(value :: term) ::
+              {:ok, term} | :obfuscate | {:error, atom}
+      @impl unquote(__MODULE__)
+      def obfuscate(value), do: obfuscate(value, [])
+
+      @doc """
+      Parse a #{inspect(__MODULE__)} key value.
+
+      ## Examples
+
+      ```elixir
+      iex> #{inspect(__MODULE__)}.parse!(pid())
+      ** (Kvasir.InvalidKey) Invalid #{__MODULE__} key.
+      ```
+      """
+      @spec parse!(value :: any, opts :: Keyword.t()) :: term | no_return
+      def parse!(value, opts \\ [])
+
+      def parse!(value, opts) do
+        case parse(value, opts) do
+          {:ok, v} ->
+            v
+
+          {:error, reason} ->
+            raise Kvasir.InvalidKey, value: value, key: __MODULE__, reason: reason
+        end
+      end
+
+      @doc false
+      @spec partition!(value :: term, partitions :: pos_integer) :: non_neg_integer | no_return
+      def partition!(value, partitions) do
+        {:ok, p} = partition(value, partitions)
+        p
+      end
+
       unquote(base)
-      defoverridable parse: 2, dump: 2, obfuscate: 2
+      defoverridable parse: 1, parse: 2, dump: 1, dump: 2, obfuscate: 1, obfuscate: 2
     end
   end
 end

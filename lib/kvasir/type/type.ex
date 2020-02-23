@@ -17,8 +17,12 @@ defmodule Kvasir.Type do
   Type descriptive name.
   """
   @callback name :: String.t()
+  @callback parse(value :: any) :: {:ok, term} | {:error, atom}
   @callback parse(value :: any, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
+  @callback dump(value :: term) :: {:ok, term} | {:error, atom}
   @callback dump(value :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, atom}
+  @callback obfuscate(value :: term) ::
+              {:ok, term} | :obfuscate | {:error, atom}
   @callback obfuscate(value :: term, opts :: Keyword.t()) ::
               {:ok, term} | :obfuscate | {:error, atom}
 
@@ -55,6 +59,46 @@ defmodule Kvasir.Type do
       @impl unquote(__MODULE__)
       def obfuscate(_value, _opts), do: :obfuscate
 
+      ### No Ops ###
+
+      @spec parse(value :: any) :: {:ok, term} | {:error, atom}
+      @impl unquote(__MODULE__)
+      def parse(value), do: parse(value, [])
+
+      @spec dump(value :: term) :: {:ok, term} | {:error, atom}
+      @impl unquote(__MODULE__)
+      def dump(value), do: dump(value, [])
+
+      @spec obfuscate(value :: term) ::
+              {:ok, term} | :obfuscate | {:error, atom}
+      @impl unquote(__MODULE__)
+      def obfuscate(value), do: obfuscate(value, [])
+
+      ### Bangs ###
+
+      @doc """
+      Parse a #{inspect(__MODULE__)} type value.
+
+      ## Examples
+
+      ```elixir
+      iex> #{inspect(__MODULE__)}.parse!(pid())
+      ** (Kvasir.InvalidType) Invalid #{__MODULE__} type.
+      ```
+      """
+      @spec parse!(value :: any, opts :: Keyword.t()) :: term | no_return
+      def parse!(value, opts \\ [])
+
+      def parse!(value, opts) do
+        case parse(value, opts) do
+          {:ok, v} ->
+            v
+
+          {:error, reason} ->
+            raise Kvasir.InvalidType, value: value, type: __MODULE__, reason: reason
+        end
+      end
+
       @doc false
       @spec __type__(atom) :: term
       def __type__(:name), do: unquote(name)
@@ -64,7 +108,7 @@ defmodule Kvasir.Type do
       def __type__(:hexdocs), do: unquote(hexdocs)
       def __type__(:source), do: unquote(source)
 
-      defoverridable parse: 2, dump: 2, obfuscate: 2
+      defoverridable parse: 1, parse: 2, dump: 1, dump: 2, obfuscate: 1, obfuscate: 2
     end
   end
 
