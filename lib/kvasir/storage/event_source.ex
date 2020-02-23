@@ -287,6 +287,7 @@ defmodule Kvasir.EventSource do
         |> Enum.map(&Macro.camelize/1)
         |> Enum.join(".")
         |> (&Module.concat(__CALLER__.module, &1)).(),
+      freeze: Keyword.get(opts, :freeze, true),
       topic: topic,
       key: Macro.expand(@build_ins[key_format] || key_format, __CALLER__),
       partitions: opts[:partitions] || 4,
