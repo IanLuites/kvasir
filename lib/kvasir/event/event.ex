@@ -196,7 +196,23 @@ defmodule Kvasir.Event do
         end
       end
 
-      defoverridable create: 1
+      @doc ~S"""
+      Describe the event applied to the given key.
+
+      ## Examples
+
+      ```elixir
+      iex> describe("User<64523>", <event>)
+      "User<64523> event-ed."
+      ```
+      """
+      @spec describe(String.t(), Kvasir.Event.t()) :: String.t()
+      def describe(key, event)
+
+      def describe(key, _event),
+        do: "#{key} #{unquote(type |> Kvasir.Util.name() |> String.replace(~r/\.|\_/, " "))}."
+
+      defoverridable create: 1, describe: 2
 
       defimpl Jason.Encoder, for: __MODULE__ do
         alias Jason.EncodeError
