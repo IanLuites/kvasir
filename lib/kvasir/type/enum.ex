@@ -55,6 +55,9 @@ defmodule Kvasir.Type.Enum do
       def dump(value, opts \\ [])
       unquote(dump)
 
+      @impl Kvasir.Type
+      def describe(value), do: to_string(value)
+
       @doc """
       List all possible values for the given enum.
 
