@@ -41,7 +41,7 @@ defmodule EventStream do
     def reduce(es = %EventStream{source: source}, acc, fun) do
       fun_x = fn e, {o, a} ->
         {x, y} = fun.(e, a)
-        {x, {Kvasir.Offset.set(o, e.__meta__.partition, e.__meta__.offset), y}}
+        {x, {Kvasir.Offset.set(o, e.__meta__.partition, e.__meta__.offset + 1), y}}
       end
 
       {acc_t, acc_v} = acc

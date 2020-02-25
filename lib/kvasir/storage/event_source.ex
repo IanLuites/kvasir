@@ -570,6 +570,13 @@ defmodule Kvasir.EventSource do
         end
       end
 
+    partition =
+      cond do
+        p = opts[:partition] -> p
+        id -> id |> topic.key.partition(topic.partitions) |> elem(1)
+        :all -> nil
+      end
+
     events = events(opts[:events])
     missing = Enum.filter(events || [], &(&1 not in topic.events))
 
@@ -579,12 +586,32 @@ defmodule Kvasir.EventSource do
             }"
     end
 
+    from =
+      if f = opts[:from] do
+        cond do
+          is_nil(partition) ->
+            f
+
+          o = f.partitions[partition] ->
+            %{f | partitions: %{partition => o}}
+
+          :not_set ->
+            raise "Partition or Key set, but given `:from` offset does not contain this partition."
+        end
+      else
+        if is_nil(partition) do
+          Kvasir.Offset.create(Map.new(0..(topic.partitions - 1), &{&1, 0}))
+        else
+          Kvasir.Offset.create(partition, 0)
+        end
+      end
+
     %EventStream{
       source: source,
       topic: topic,
       id: id,
-      partition: opts[:partition],
-      from: opts[:from],
+      partition: partition,
+      from: from,
       events: events,
       endless: opts[:endless] || false
     }
