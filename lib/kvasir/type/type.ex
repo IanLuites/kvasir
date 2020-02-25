@@ -25,6 +25,7 @@ defmodule Kvasir.Type do
               {:ok, term} | :obfuscate | {:error, atom}
   @callback obfuscate(value :: term, opts :: Keyword.t()) ::
               {:ok, term} | :obfuscate | {:error, atom}
+  @callback describe(value :: term) :: String.t()
 
   defmacro __using__(opts \\ []) do
     {app, version, hex, hexdocs, source} = Kvasir.Util.documentation(__CALLER__)
@@ -74,6 +75,10 @@ defmodule Kvasir.Type do
       @impl unquote(__MODULE__)
       def obfuscate(value), do: obfuscate(value, [])
 
+      @spec describe(value :: term) :: String.t()
+      @impl unquote(__MODULE__)
+      def describe(value), do: inspect(value)
+
       ### Bangs ###
 
       @doc """
@@ -108,7 +113,7 @@ defmodule Kvasir.Type do
       def __type__(:hexdocs), do: unquote(hexdocs)
       def __type__(:source), do: unquote(source)
 
-      defoverridable parse: 1, parse: 2, dump: 1, dump: 2, obfuscate: 1, obfuscate: 2
+      defoverridable describe: 1, parse: 1, parse: 2, dump: 1, dump: 2, obfuscate: 1, obfuscate: 2
     end
   end
 
