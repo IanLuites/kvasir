@@ -589,6 +589,9 @@ defmodule Kvasir.EventSource do
     from =
       if f = opts[:from] do
         cond do
+          Kvasir.Offset.empty?(f) ->
+            Kvasir.Offset.create(partition, 0)
+
           is_nil(partition) ->
             f
 
