@@ -21,6 +21,8 @@ defmodule Kvasir.Event do
       end)
     end
 
+    Module.put_attribute(__CALLER__.module, :describe, opts[:describe])
+
     quote do
       import Kvasir.Event, only: [event: 1, event: 2, upgrade: 2, version: 1, version: 2]
       @before_compile Kvasir.Event
@@ -77,12 +79,14 @@ defmodule Kvasir.Event do
 
   defmacro field(name, type \\ :string, opts \\ []) do
     opts = Keyword.put_new(opts, :sensitive, false)
+    t = Kvasir.Type.lookup(type)
+    Module.put_attribute(__CALLER__.module, :"field_#{name}", t)
 
     quote do
       Module.put_attribute(
         __MODULE__,
         :fields,
-        {unquote(name), unquote(Kvasir.Type.lookup(type)),
+        {unquote(name), unquote(t),
          unquote(opts)
          |> Keyword.put_new_lazy(:doc, fn ->
            case Module.delete_attribute(__MODULE__, :doc) do
@@ -208,9 +212,8 @@ defmodule Kvasir.Event do
       """
       @spec describe(String.t(), Kvasir.Event.t()) :: String.t()
       def describe(key, event)
-
-      def describe(key, _event),
-        do: "#{key} #{unquote(type |> Kvasir.Util.name() |> String.replace(~r/\.|\_/, " "))}."
+      require Kvasir.Describer
+      Kvasir.Describer.event(unquote(type))
 
       defoverridable create: 1, describe: 2
 
@@ -291,6 +294,11 @@ defmodule Kvasir.Event do
   defdelegate encode(event), to: Kvasir.Event.Encoding
   defdelegate encode(topic, event, opts \\ []), to: Kvasir.Event.Encoding
   defdelegate decode(topic, event, opts \\ []), to: Kvasir.Event.Encoding
+
+  def describe(event = %t{__meta__: %{key: k, key_type: key}}) do
+    subject = if key, do: key.describe(k), else: ""
+    t.describe(subject, event)
+  end
 
   @doc ~S"""
   """
