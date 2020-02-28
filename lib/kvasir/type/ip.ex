@@ -6,6 +6,8 @@ defmodule Kvasir.Type.IP do
 
   @impl Kvasir.Type
   def parse(value, opts \\ [])
+  def parse(ip = {_, _, _, _}, _opts), do: {:ok, ip}
+  def parse(ip = {_, _, _, _, _, _, _, _}, _opts), do: {:ok, ip}
 
   def parse(value, _opts) when is_binary(value) do
     with {:error, _} <- :inet.parse_address(String.to_charlist(value)),
