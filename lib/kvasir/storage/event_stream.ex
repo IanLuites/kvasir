@@ -134,7 +134,7 @@ defmodule EventStream do
             if o.partitions == %{} do
               cold_storage(tail, es, {tt, new_acc}, fun)
             else
-              o2 = Kvasir.Offset.bump_merge(es.from, o)
+              o2 = Kvasir.Offset.merge(es.from, o)
               cold_storage(tail, %{es | from: o2}, {tt, new_acc}, fun)
             end
         end
