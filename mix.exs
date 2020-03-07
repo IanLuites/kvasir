@@ -63,7 +63,7 @@ defmodule Kvasir.MixProject do
 
   defp deps do
     [
-      {:common_x, "~> 0.2.0"},
+      {:common_x, "~> 0.4"},
       {:jason, "~> 1.1"},
       {:msgpax, "~> 2.2"},
       {:utc_datetime, "~> 0.0.7"},
