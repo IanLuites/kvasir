@@ -24,11 +24,14 @@ defmodule EventStream do
 
     stream
     |> Enumerable.reduce({:cont, {[], 0}}, fn i, {l, c} ->
-      if c < to, do: {:cont, {[i | l], c + 1}}, else: {:halt, [i | l]}
+      cond do
+        c < from -> {:cont, l, c + 1}
+        c < to -> {:cont, [i | l], c + 1}
+        :done -> {:halt, [i | l]}
+      end
     end)
     |> elem(1)
     |> :lists.reverse()
-    |> Enumerable.List.slice(from, to)
   end
 
   defimpl Enumerable, for: __MODULE__ do

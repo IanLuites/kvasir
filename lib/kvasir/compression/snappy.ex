@@ -18,7 +18,7 @@ defmodule Kvasir.Compression.Snappy do
   require Logger
 
   defp ensure_snappy! do
-    unless Code.ensure_compiled?(:zstd) do
+    unless CodeX.ensure_compiled?(:zstd) do
       Logger.error(fn ->
         """
         Missing `:snappyer` required for Snappy compression.

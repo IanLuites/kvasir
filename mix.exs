@@ -63,10 +63,13 @@ defmodule Kvasir.MixProject do
 
   defp deps do
     [
-      {:common_x, "~> 0.4"},
+      {:common_x, "~> 0.5"},
       {:jason, "~> 1.1"},
       {:msgpax, "~> 2.2"},
-      {:utc_datetime, "~> 0.0.7"},
+      {:poolboy, "~> 1.5"},
+      {:utc_datetime, ">= 1.0.0"},
+
+      # Dev / Testing
       {:analyze, "~> 0.1.10", optional: true, runtime: false, only: [:dev, :test]}
     ]
   end

@@ -19,7 +19,7 @@ defmodule Kvasir.Compression.ZStandard do
   require Logger
 
   defp ensure_zstd! do
-    unless Code.ensure_compiled?(:zstd) do
+    unless CodeX.ensure_compiled?(:zstd) do
       Logger.error(fn ->
         """
         Missing `:zstd` required for ZStandard compression.
