@@ -3,11 +3,12 @@ defmodule Kvasir.Describer do
     module = __CALLER__.module
 
     if description = Module.get_attribute(module, :describe) do
+      key = if(String.contains?(description, "$?"), do: :key, else: :_key)
       {setup, vars} = gather(description)
 
       if vars == [] do
         quote do
-          def describe(unquote({:key, [], nil}), _event) do
+          def describe(unquote({key, [], nil}), _event) do
             <<unquote_splicing(setup)>>
           end
         end
@@ -25,7 +26,7 @@ defmodule Kvasir.Describer do
           end)
 
         quote do
-          def describe(unquote({:key, [], nil}), unquote({:event, [], nil})) do
+          def describe(unquote({key, [], nil}), unquote({:event, [], nil})) do
             unquote(describe)
             <<unquote_splicing(setup)>>
           end
