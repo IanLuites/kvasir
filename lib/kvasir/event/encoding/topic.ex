@@ -273,16 +273,19 @@ defmodule Kvasir.Event.Encoding.Topic do
 
   defp gen_event_matchers(key, events) do
     {Enum.reduce(events, nil, fn e, acc ->
+       type = e.__event__(:type)
+       event = e.__event__(:replaced_by) || e
+
        quote do
          unquote(acc)
 
          def bin_decode(
-               <<unquote(e.__event__(:type)), 0, major::size(16), minor::size(16),
-                 patch::size(16), data::binary>>
+               <<unquote(type), 0, major::size(16), minor::size(16), patch::size(16),
+                 data::binary>>
              ),
              do:
                bin_decode(
-                 unquote(e),
+                 unquote(event),
                  unquote(key),
                  %Version{major: major, minor: minor, patch: patch},
                  data
@@ -290,10 +293,13 @@ defmodule Kvasir.Event.Encoding.Topic do
        end
      end),
      Enum.reduce(events, nil, fn e, acc ->
+       type = e.__event__(:type)
+       event = e.__event__(:replaced_by) || e
+
        quote do
          unquote(acc)
 
-         defp event(unquote(e.__event__(:type))), do: {:ok, unquote(e)}
+         defp event(unquote(type)), do: {:ok, unquote(event)}
        end
      end)}
   end

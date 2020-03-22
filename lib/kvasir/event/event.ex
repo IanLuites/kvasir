@@ -11,6 +11,13 @@ defmodule Kvasir.Event do
   defmacro __using__(opts \\ []) do
     on_error = opts[:on_error] || :halt
 
+    deprecated =
+      case opts[:deprecated] do
+        true -> "Event has been deprecated."
+        d when is_binary(d) -> d
+        _ -> false
+      end
+
     if opts[:key_type] do
       Logger.warn(fn ->
         """
@@ -28,6 +35,7 @@ defmodule Kvasir.Event do
       @before_compile Kvasir.Event
       @on_error unquote(on_error)
       @compress unquote(opts[:compress] || false)
+      @event_deprecated unquote(deprecated)
 
       # Version Tracking
       Module.register_attribute(__MODULE__, :version, persist: true, accumulate: true)
@@ -121,6 +129,80 @@ defmodule Kvasir.Event do
   end
 
   defmacro event(type), do: create_event(__CALLER__, type)
+
+  defmacro event(type, replaced_by: other) do
+    {app, version, hex, hexdocs, source} = Kvasir.Util.documentation(__CALLER__)
+
+    quote do
+      @event_deprecated unquote("Replaced by `#{Macro.expand(other, __CALLER__)}`.")
+
+      @doc ~S"""
+      Create an event based on given fields.
+
+      ## Examples
+
+      ```elixir
+      iex> create(field: :value)
+      ```
+      """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
+      @spec create(Keyword.t()) :: {:ok, Kvasir.Event.t()} | {:error, reason :: atom}
+      defdelegate create(fields \\ []), to: unquote(other)
+
+      @doc ~S"""
+      Create an event based on given fields.
+
+      ## Examples
+
+      ```elixir
+      iex> create!(field: :value)
+      ```
+      """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
+      @spec create!(Keyword.t()) :: Kvasir.Event.t() | no_return
+      defdelegate create!(fields \\ []), to: unquote(other)
+
+      @doc ~S"""
+      Describe the event applied to the given key.
+
+      ## Examples
+
+      ```elixir
+      iex> describe("User<64523>", <event>)
+      "User<64523> event-ed."
+      ```
+      """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
+      @spec describe(String.t(), Kvasir.Event.t()) :: String.t()
+      defdelegate describe(key, event), to: unquote(other)
+
+      @doc false
+      @spec __event__(atom) :: term
+      def __event__(:replaced_by), do: unquote(other)
+      def __event__(:type), do: unquote(Kvasir.Util.name(type))
+      def __event__(:app), do: {unquote(app), unquote(version)}
+      def __event__(:hex), do: unquote(hex)
+      def __event__(:hexdocs), do: unquote(hexdocs)
+      def __event__(:source), do: unquote(source)
+      def __event__(:deprecated), do: @event_deprecated
+      def __event__(:doc), do: @moduledoc
+      def __event__(info), do: unquote(other).__event__(info)
+
+      @doc false
+      @spec __event__(atom, atom) :: term
+      defdelegate __event__(type, field), to: unquote(other)
+    end
+  end
+
   defmacro event(type, do: block), do: create_event(__CALLER__, type, block)
 
   defp create_event(caller, type, block \\ nil) do
@@ -156,6 +238,7 @@ defmodule Kvasir.Event do
       def __event__(:type), do: unquote(Kvasir.Util.name(type))
       def __event__(:fields), do: @event_fields
       def __event__(:on_error), do: @on_error
+      def __event__(:deprecated), do: @event_deprecated
       def __event__(:sensitive), do: @sensitive_fields
       def __event__(:doc), do: @moduledoc
       def __event__(:version), do: @current_version
@@ -180,6 +263,10 @@ defmodule Kvasir.Event do
       iex> create(field: :value)
       ```
       """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
       @spec create(Keyword.t()) :: {:ok, Kvasir.Event.t()} | {:error, reason :: atom}
       def create(fields \\ []), do: Kvasir.Event.Encoding.create(__MODULE__, Map.new(fields))
 
@@ -192,6 +279,10 @@ defmodule Kvasir.Event do
       iex> create!(field: :value)
       ```
       """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
       @spec create!(Keyword.t()) :: Kvasir.Event.t() | no_return
       def create!(fields \\ []) do
         case create(fields) do
@@ -210,6 +301,10 @@ defmodule Kvasir.Event do
       "User<64523> event-ed."
       ```
       """
+      if @event_deprecated do
+        @deprecated @event_deprecated
+      end
+
       @spec describe(String.t(), Kvasir.Event.t()) :: String.t()
       def describe(key, event)
       require Kvasir.Describer

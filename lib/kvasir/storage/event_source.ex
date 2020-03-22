@@ -461,11 +461,12 @@ defmodule Kvasir.EventSource do
             ]}
          ]},
         fn event, acc ->
+          t = event.__event__(:type)
+          e = event.__event__(:replaced_by) || event
+
           quote do
             unquote(acc)
-
-            def unquote(:"#{topic}_event_lookup")(unquote(event.__event__(:type))),
-              do: unquote(event)
+            def unquote(:"#{topic}_event_lookup")(unquote(t)), do: unquote(e)
           end
         end
       )
