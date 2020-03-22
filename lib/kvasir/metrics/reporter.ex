@@ -1,4 +1,4 @@
-defmodule Kvasir.Metrics.HealthReporter do
+defmodule Kvasir.Metrics.Reporter do
   @moduledoc false
   use GenServer
 
@@ -6,7 +6,7 @@ defmodule Kvasir.Metrics.HealthReporter do
   @spec child_spec(source :: module, opts :: Keyword.t()) :: :supervisor.child_spec()
   def child_spec(source, opts \\ []) do
     %{
-      id: :health_reporter,
+      id: :reporter,
       start: {__MODULE__, :start_link, [source, opts]}
     }
   end
@@ -16,13 +16,15 @@ defmodule Kvasir.Metrics.HealthReporter do
   @doc false
   @spec start_link(module, opts :: Keyword.t()) :: GenServer.on_start()
   def start_link(source, opts) do
+    reporter = Module.concat(source, "Reporter")
+
     GenServer.start_link(
       __MODULE__,
       %{
         opts: opts,
         source: source
       },
-      []
+      name: reporter
     )
   end
 
@@ -32,6 +34,10 @@ defmodule Kvasir.Metrics.HealthReporter do
     {:ok, host} = :inet.gethostname()
     opts = Keyword.put_new(opts, :interval, 5 * 60 * 1_000)
 
+    # Initial Report
+    report_application(source, app, host, opts)
+
+    # Start Timer
     Process.send_after(self(), :report, opts[:interval])
 
     {:ok, %{app: app, source: source, host: host, opts: opts}}
@@ -45,7 +51,24 @@ defmodule Kvasir.Metrics.HealthReporter do
     {:noreply, state}
   end
 
-  def encode_dependencies(dependencies) do
+  @spec report_application(module, atom, String.t() | charlist, Keyword.t()) :: :ok
+  defp report_application(source, app, host, opts) do
+    main_project = ApplicationX.main_project()
+
+    app_info =
+      main_project
+      |> Keyword.take(~w(name type version description source_url homepage_url dependencies)a)
+      |> Keyword.merge(Keyword.get(opts, :app, []))
+      |> Keyword.update(:dependencies, nil, &encode_dependencies/1)
+      |> Enum.reject(&(&1 == nil or elem(&1, 1) == nil))
+      |> Enum.map(fn {k, v} -> "#{k}:#{v}" end)
+      |> Enum.join(",")
+
+    source.metric(["start|", to_string(app), "|", host, "|", app_info])
+  end
+
+  @spec encode_dependencies(list) :: String.t()
+  defp encode_dependencies(dependencies) do
     dependencies
     |> Map.new(fn {category, deps} ->
       {category,

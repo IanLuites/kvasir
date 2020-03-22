@@ -1,6 +1,7 @@
 defmodule Kvasir.Metrics.Dispatcher do
   @moduledoc false
   use GenServer
+  alias Kvasir.Metrics.Resolver
   require Logger
 
   @header_size 7
@@ -10,7 +11,7 @@ defmodule Kvasir.Metrics.Dispatcher do
   @doc false
   @spec child_spec(opts :: Keyword.t()) :: :supervisor.child_spec()
   def child_spec(opts \\ []) do
-    pool = Module.concat(opts[:source], Metrics)
+    pool = opts[:source]
 
     :poolboy.child_spec(
       pool,
@@ -47,11 +48,13 @@ defmodule Kvasir.Metrics.Dispatcher do
 
   @impl GenServer
   def init(state = %{resolver: resolver}) do
+    Resolver.listen(resolver)
+
     state =
       Map.merge(state, %{
         buffer: [],
         size: 0,
-        target: resolver.host(),
+        target: Resolver.host(resolver),
         timer: nil
       })
 
