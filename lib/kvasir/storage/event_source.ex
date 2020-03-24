@@ -291,6 +291,26 @@ defmodule Kvasir.EventSource do
         end
       end
 
+      @doc ~S"""
+      Create a test stream of given events from a given topic.
+
+      ## Examples
+
+      ```elixir
+      iex> test_stream("users", [])
+      []
+      ```
+      """
+      @spec test_stream(String.t(), [Kvasir.Event.t()], Keyword.t()) ::
+              {:ok, Enumerable.t()} | {:error, atom}
+      def test_stream(topic, events, opts \\ []) do
+        if t = __topics__()[topic] do
+          unquote(__MODULE__).test_stream(__MODULE__, t, events, opts)
+        else
+          {:error, :unknown_topic}
+        end
+      end
+
       @doc false
       @spec __source__ :: term
       def __source__, do: unquote(event_storage)
@@ -621,6 +641,56 @@ defmodule Kvasir.EventSource do
     }
   end
 
+  def test_stream(source, topic, events, opts) do
+    import Kvasir.Event,
+      only: [
+        key: 1,
+        set_key: 2,
+        set_offset: 2,
+        set_partition: 2,
+        set_source: 2,
+        set_timestamp: 2,
+        set_topic: 2,
+        type: 1
+      ]
+
+    key = if k = opts[:key], do: topic.key.parse!(k)
+
+    p =
+      if key,
+        do: fn -> topic.key.partition!(key, topic.partitions) end,
+        else: fn -> Enum.random(0..(topic.partitions - 1)) end
+
+    event_filter = events(opts[:events])
+    missing = Enum.filter(event_filter || [], &(&1 not in topic.events))
+
+    unless missing == [] do
+      raise "The following events do not belong to the topic:\n#{
+              missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")
+            }"
+    end
+
+    {:ok,
+     events
+     |> Enum.with_index()
+     |> Enum.map(fn {event, o} ->
+       {e, k} =
+         case event do
+           {e, k} -> {e, k}
+           e -> {e, key}
+         end
+
+       e
+       |> set_key(k)
+       |> set_offset(o)
+       |> set_partition(p.())
+       |> set_source(source)
+       |> set_timestamp(UTCDateTime.utc_now())
+       |> set_topic(topic.topic)
+     end)
+     |> Enum.filter(&(is_nil(event_filter) or type(&1) in event_filter))
+     |> Enum.filter(&(is_nil(key) or key(&1) == key))}
+  end
   defp events(nil), do: nil
   defp events(events) when is_list(events), do: events
   defp events(event) when is_atom(event), do: [event]
