@@ -206,6 +206,7 @@ defmodule Mix.Tasks.Events do
       Enum.reduce(data, base, fn row, acc -> merge_map(row, acc, &max(String.length(&1), &2)) end)
 
     width = Enum.sum(widths) + (Enum.count(widths) - 1) * dist
+
     # {:ok, max_width} = :io.columns()
     # retract = if width > max_width, do: max_width - (width + 3), else: 0
 

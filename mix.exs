@@ -67,7 +67,7 @@ defmodule Kvasir.MixProject do
       {:jason, "~> 1.1"},
       {:msgpax, "~> 2.2"},
       {:poolboy, "~> 1.5"},
-      {:utc_datetime, ">= 1.0.0"},
+      {:utc_datetime, "~> 1.0"},
 
       # Dev / Testing
       {:analyze, "~> 0.1.10", optional: true, runtime: false, only: [:dev, :test]}

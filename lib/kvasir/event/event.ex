@@ -414,6 +414,9 @@ defmodule Kvasir.Event do
   def key(%{__meta__: %{key: key}}), do: key
   def key(_), do: nil
 
+  @spec partition(t) :: non_neg_integer
+  def partition(%{__meta__: %{partition: partition}}), do: partition
+
   @doc ~S"""
   Set a key for an event.
   """

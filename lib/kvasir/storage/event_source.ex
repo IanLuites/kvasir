@@ -645,6 +645,7 @@ defmodule Kvasir.EventSource do
     import Kvasir.Event,
       only: [
         key: 1,
+        partition: 1,
         set_key: 2,
         set_offset: 2,
         set_partition: 2,
@@ -655,14 +656,15 @@ defmodule Kvasir.EventSource do
       ]
 
     key = if k = opts[:key], do: topic.key.parse!(k)
+    partition = opts[:partition]
 
-    p =
-      if key,
-        do: fn -> topic.key.partition!(key, topic.partitions) end,
-        else: fn -> Enum.random(0..(topic.partitions - 1)) end
+    p = fn
+      nil -> Enum.random(0..(topic.partitions - 1))
+      k -> topic.key.partition!(k, topic.partitions)
+    end
 
-    event_filter = events(opts[:events])
-    missing = Enum.filter(event_filter || [], &(&1 not in topic.events))
+    event_option = events(opts[:events])
+    missing = Enum.filter(event_option || [], &(&1 not in topic.events))
 
     unless missing == [] do
       raise "The following events do not belong to the topic:\n#{
@@ -670,27 +672,39 @@ defmodule Kvasir.EventSource do
             }"
     end
 
+    event_filter = if event_option, do: Enum.map(event_option, &type/1)
+
     {:ok,
      events
-     |> Enum.with_index()
-     |> Enum.map(fn {event, o} ->
+     |> Enum.reduce({%{}, []}, fn event, {off, acc} ->
        {e, k} =
          case event do
            {e, k} -> {e, k}
            e -> {e, key}
          end
 
-       e
-       |> set_key(k)
-       |> set_offset(o)
-       |> set_partition(p.())
-       |> set_source(source)
-       |> set_timestamp(UTCDateTime.utc_now())
-       |> set_topic(topic.topic)
+       pp = p.(k)
+       off = Map.update(off, pp, 0, &(&1 + 1))
+       o = off[pp]
+
+       e_set =
+         e
+         |> set_key(k)
+         |> set_offset(o)
+         |> set_partition(pp)
+         |> set_source(source)
+         |> set_timestamp(UTCDateTime.utc_now())
+         |> set_topic(topic.topic)
+
+       {off, [e_set | acc]}
      end)
+     |> elem(1)
+     |> :lists.reverse()
      |> Enum.filter(&(is_nil(event_filter) or type(&1) in event_filter))
-     |> Enum.filter(&(is_nil(key) or key(&1) == key))}
+     |> Enum.filter(&(is_nil(key) or key(&1) == key))
+     |> Enum.filter(&(is_nil(partition) or partition(&1) == partition))}
   end
+
   defp events(nil), do: nil
   defp events(events) when is_list(events), do: events
   defp events(event) when is_atom(event), do: [event]
