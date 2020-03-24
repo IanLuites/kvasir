@@ -439,6 +439,19 @@ defmodule Kvasir.Event do
   def set_partition(e = %{__meta__: meta}, partition),
     do: %{e | __meta__: %{meta | partition: partition}}
 
+  @doc ~S"""
+  Set a timestamp for an event.
+  """
+  @spec set_timestamp(t, UTCDateTime.t()) :: t
+  def set_timestamp(e = %{__meta__: meta}, timestamp),
+    do: %{e | __meta__: %{meta | timestamp: timestamp}}
+
+  @doc ~S"""
+  Set a source for an event.
+  """
+  @spec set_source(t, module) :: t
+  def set_source(e = %{__meta__: meta}, source), do: %{e | __meta__: %{meta | source: source}}
+
   # @spec key(t) :: :string | :integer
   # def key_type(%event{}), do: event.__event__(:key_type)
   # def key_type(event) when is_atom(event), do: event.__event__(:key_type)
