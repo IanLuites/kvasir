@@ -647,6 +647,7 @@ defmodule Kvasir.EventSource do
         key: 1,
         partition: 1,
         set_key: 2,
+        set_key_type: 2,
         set_offset: 2,
         set_partition: 2,
         set_source: 2,
@@ -690,6 +691,7 @@ defmodule Kvasir.EventSource do
        e_set =
          e
          |> set_key(k)
+         |> set_key_type(topic.key)
          |> set_offset(o)
          |> set_partition(pp)
          |> set_source(source)

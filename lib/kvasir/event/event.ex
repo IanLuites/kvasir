@@ -424,6 +424,12 @@ defmodule Kvasir.Event do
   def set_key(e = %{__meta__: meta}, key), do: %{e | __meta__: %{meta | key: key}}
 
   @doc ~S"""
+  Set a key type for an event.
+  """
+  @spec set_key_type(t, module) :: t
+  def set_key_type(e = %{__meta__: meta}, type), do: %{e | __meta__: %{meta | key_type: type}}
+
+  @doc ~S"""
   Set an offset for an event.
   """
   @spec set_offset(t, term) :: t
