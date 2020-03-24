@@ -680,7 +680,7 @@ defmodule Kvasir.EventSource do
      |> Enum.reduce({%{}, []}, fn event, {off, acc} ->
        {e, k} =
          case event do
-           {e, k} -> {e, k}
+           {e, k} -> {e, if(k, do: topic.key.parse!(k))}
            e -> {e, key}
          end
 
