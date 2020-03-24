@@ -248,6 +248,7 @@ defmodule Kvasir.Event do
       def __event__(:hexdocs), do: unquote(hexdocs)
       def __event__(:source), do: unquote(source)
       def __event__(:compress), do: @compress
+      def __event__(:replaced_by), do: nil
 
       @field_type Map.new(@fields, fn {k, v, _} -> {k, v} end)
       @doc false
