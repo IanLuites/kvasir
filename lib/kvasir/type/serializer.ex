@@ -1,4 +1,5 @@
 defmodule Kvasir.Type.Serializer do
+  require Logger
   @type field :: {name :: atom, type :: module, opts :: Keyword.t()}
 
   @spec encode([field], map, Keyword.t()) ::
@@ -59,6 +60,10 @@ defmodule Kvasir.Type.Serializer do
 
       error = {:error, _} ->
         error
+
+      other ->
+        Logger.error("Type <#{inspect(type)}> returned invalid response: #{other}")
+        {:error, :invalid_type_response}
     end
   end
 
