@@ -46,13 +46,24 @@ defmodule Kvasir.Type.Serializer do
     else
       :error ->
         cond do
-          default = opts[:default] -> do_decode(fields, data, Map.put(acc, field, default))
-          opts[:optional] -> do_decode(fields, data, acc)
-          :missing -> {:error, :"missing_#{field}_field"}
+          default = opts[:default] ->
+            with {:ok, d} <- default_value(default, opts),
+                 do: do_decode(fields, data, Map.put(acc, field, d))
+
+          opts[:optional] ->
+            do_decode(fields, data, acc)
+
+          :missing ->
+            {:error, :"missing_#{field}_field"}
         end
 
       error = {:error, _} ->
         error
     end
   end
+
+  @spec default_value(default :: term, opts :: Keyword.t()) :: {:ok, term} | {:error, term}
+  defp default_value(default, opts) when is_function(default, 1), do: default.(opts)
+  defp default_value(default, _opts) when is_function(default, 0), do: default.()
+  defp default_value(default, _opts), do: {:ok, default}
 end
