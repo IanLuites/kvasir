@@ -85,10 +85,12 @@ defmodule Kvasir.Event do
     end
   end
 
-  defmacro field(name, type \\ :string, opts \\ []) do
+  defmacro field(name, type \\ :string, opts \\ []), do: property(__CALLER__, name, type, opts)
+
+  def property(caller, name, type, opts) do
     opts = Keyword.put_new(opts, :sensitive, false)
     t = Kvasir.Type.lookup(type)
-    Module.put_attribute(__CALLER__.module, :"field_#{name}", t)
+    Module.put_attribute(caller.module, :"field_#{name}", t)
 
     quote do
       Module.put_attribute(
