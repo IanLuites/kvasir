@@ -4,7 +4,8 @@ defmodule Kvasir.Event.Meta do
           topic: String.t(),
           partition: non_neg_integer,
           offset: non_neg_integer,
-          key: String.t(),
+          key: term,
+          sub_key: nil | [atom | {atom, term}],
           timestamp: UTCDateTime.t(),
           meta: map
         }
@@ -16,6 +17,7 @@ defmodule Kvasir.Event.Meta do
     :offset,
     :key,
     :key_type,
+    :sub_key,
     :timestamp,
     :meta
   ]
@@ -32,6 +34,16 @@ defmodule Kvasir.Event.Meta do
     |> Map.from_struct()
     |> Map.delete(:key_type)
     |> Map.update(:timestamp, nil, &ts_encode/1)
+    |> MapX.update_if_exists(:sub_key, fn
+      nil ->
+        nil
+
+      path ->
+        Enum.map(path, fn
+          {a, b} -> [a, b]
+          a -> a
+        end)
+    end)
     |> Enum.reject(&nil_value/1)
     |> Enum.into(%{})
   end
@@ -47,6 +59,12 @@ defmodule Kvasir.Event.Meta do
       |> Enum.reject(&nil_value/1)
       |> Enum.into(%{}, &atomize/1)
       |> Map.update(:timestamp, nil, &ts_decode/1)
+      |> Map.update(:sub_key, nil, fn path ->
+        Enum.map(path, fn
+          [a, b] -> {String.to_atom(a), b}
+          a -> String.to_atom(a)
+        end)
+      end)
     )
   end
 
