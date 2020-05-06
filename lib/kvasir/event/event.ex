@@ -416,6 +416,10 @@ defmodule Kvasir.Event do
   def key(%{__meta__: %{key: key}}), do: key
   def key(_), do: nil
 
+  @spec sub_key(t) :: term
+  def sub_key(%{__meta__: %{sub_key: key}}), do: key
+  def sub_key(_), do: nil
+
   @spec partition(t) :: non_neg_integer
   def partition(%{__meta__: %{partition: partition}}), do: partition
 
