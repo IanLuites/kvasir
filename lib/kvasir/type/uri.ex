@@ -19,8 +19,8 @@ defmodule Kvasir.Type.URI do
 
   def parse(uri = %URI{host: host, scheme: scheme}, opts) do
     cond do
-      not eq?(host, opts[:host]) -> {:invalid_uri_host}
-      not eq?(scheme, opts[:scheme]) -> {:invalid_uri_scheme}
+      not eq?(host, opts[:host]) -> {:error, :invalid_uri_host}
+      not eq?(scheme, opts[:scheme]) -> {:error, :invalid_uri_scheme}
       true -> {:ok, uri}
     end
   end
