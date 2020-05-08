@@ -10,17 +10,29 @@ defmodule Kvasir.Type.String do
   def parse(value, opts) when is_binary(value) do
     value = if(opts[:trim], do: String.trim(value), else: value)
 
-    case {opts[:min], opts[:max]} do
-      {nil, nil} ->
+    value =
+      case opts[:case] do
+        :lower -> String.downcase(value)
+        :upper -> String.upcase(value)
+        _ -> value
+      end
+
+    valid? = if r = opts[:regex], do: Regex.match?(r, value), else: true
+
+    case {valid?, opts[:min], opts[:max]} do
+      {false, _, _} ->
+        {:error, opts[:error] || :string_not_valid}
+
+      {_, nil, nil} ->
         {:ok, value}
 
-      {min, nil} ->
+      {_, min, nil} ->
         if(String.length(value) < min, do: {:error, :string_too_short}, else: {:ok, value})
 
-      {nil, max} ->
+      {_, nil, max} ->
         if(String.length(value) > max, do: {:error, :string_too_long}, else: {:ok, value})
 
-      {min, max} ->
+      {_, min, max} ->
         length = String.length(value)
 
         cond do
