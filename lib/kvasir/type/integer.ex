@@ -6,7 +6,16 @@ defmodule Kvasir.Type.Integer do
 
   @impl Kvasir.Type
   def parse(number, opts \\ [])
-  def parse(number, _opts) when is_integer(number), do: {:ok, number}
+
+  def parse(number, opts) when is_integer(number) do
+    max = opts[:max]
+
+    if max != nil and number > max do
+      {:error, :integer_too_high}
+    else
+      {:ok, number}
+    end
+  end
 
   def parse(number, opts) when is_binary(number) do
     case Integer.parse(number) do
@@ -26,7 +35,16 @@ defmodule Kvasir.Type.PosInteger do
 
   @impl Kvasir.Type
   def parse(number, opts \\ [])
-  def parse(number, _opts) when is_integer(number) and number > 0, do: {:ok, number}
+
+  def parse(number, opts) when is_integer(number) and number > 0 do
+    max = opts[:max]
+
+    if max != nil and number > max do
+      {:error, :integer_too_high}
+    else
+      {:ok, number}
+    end
+  end
 
   def parse(number, opts) when is_binary(number) do
     case Integer.parse(number) do
@@ -46,7 +64,16 @@ defmodule Kvasir.Type.NonNegativeInteger do
 
   @impl Kvasir.Type
   def parse(number, opts \\ [])
-  def parse(number, _opts) when is_integer(number) and number >= 0, do: {:ok, number}
+
+  def parse(number, opts) when is_integer(number) and number >= 0 do
+    max = opts[:max]
+
+    if max != nil and number > max do
+      {:error, :integer_too_high}
+    else
+      {:ok, number}
+    end
+  end
 
   def parse(number, opts) when is_binary(number) do
     case Integer.parse(number) do
