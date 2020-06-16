@@ -4,7 +4,7 @@ defmodule Kvasir.Compression.ZStandard do
     level = opts[:level] || 3
 
     quote do
-      {:ok, :zstd.compress(unquote(data), unquote(level))}
+      {:ok, :ZStandard.compress(unquote(data), unquote(level))}
     end
   end
 
@@ -12,19 +12,19 @@ defmodule Kvasir.Compression.ZStandard do
     ensure_zstd!()
 
     quote do
-      {:ok, :zstd.decompress(unquote(data))}
+      {:ok, :ZStandard.decompress(unquote(data))}
     end
   end
 
   require Logger
 
   defp ensure_zstd! do
-    unless CodeX.ensure_compiled?(:zstd) do
+    unless CodeX.ensure_compiled?(ZStandard) do
       Logger.error(fn ->
         """
-        Missing `:zstd` required for ZStandard compression.
+        Missing `:z_standard` required for ZStandard compression.
 
-        Include `{:zstd, "~> 0.2"}` in your `mix.exs` dependencies
+        Include `{:z_standard, "~> 0.0.1"}` in your `mix.exs` dependencies
         to enable ZStandard compression support.
         """
       end)
