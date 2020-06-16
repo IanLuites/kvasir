@@ -4,7 +4,7 @@ defmodule Kvasir.Compression.ZStandard do
     level = opts[:level] || 3
 
     quote do
-      {:ok, :ZStandard.compress(unquote(data), unquote(level))}
+      {:ok, ZStandard.compress(unquote(data), unquote(level))}
     end
   end
 
@@ -12,7 +12,7 @@ defmodule Kvasir.Compression.ZStandard do
     ensure_zstd!()
 
     quote do
-      {:ok, :ZStandard.decompress(unquote(data))}
+      {:ok, ZStandard.decompress(unquote(data))}
     end
   end
 
