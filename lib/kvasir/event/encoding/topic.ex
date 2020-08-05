@@ -155,6 +155,7 @@ defmodule Kvasir.Event.Encoding.Topic do
 
            require unquote(compressor)
            require unquote(encrypter)
+           require Logger
 
            ### Encoders ###
 
@@ -253,6 +254,20 @@ defmodule Kvasir.Event.Encoding.Topic do
            defp event(_), do: {:error, :unknown_event_type}
 
            defp bin_decode(event, key, version, data) do
+             with err = {:error, %Msgpax.UnpackError{reason: {:excess_bytes, _}}} <-
+                    do_bin_decode(event, key, version, data) do
+               Logger.error(
+                 fn -> "Kvasir: Invalid Event Payload For: #{inspect(event)}" end,
+                 event: event,
+                 key: key,
+                 data: data
+               )
+
+               {:error, :unknown_event_type}
+             end
+           end
+
+           defp do_bin_decode(event, key, version, data) do
              with {:ok, decrypted} <- decrypt(event, data),
                   {:ok, decompressed} <- decompress(event, decrypted) do
                binary_decode(event, key, version, decompressed)
