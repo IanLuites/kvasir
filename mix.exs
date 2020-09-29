@@ -1,10 +1,10 @@
 defmodule Kvasir.MixProject do
   use Mix.Project
-  @version "0.0.3"
+  @version "0.0.5"
 
   def project do
     [
-      app: :kvasir,
+      app: :csh2fjhyll_kvasir,
       description: "Opinionated Kafka library.",
       version: @version,
       elixir: "~> 1.7",
@@ -37,13 +37,14 @@ defmodule Kvasir.MixProject do
 
   def package do
     [
-      name: :kvasir,
+      name: :csh2fjhyll_kvasir,
       maintainers: ["Ian Luites"],
       licenses: ["MIT"],
       files: [
         # Elixir
         "lib/kvasir",
-        "lib/kvasir.ex",
+        "lib/mix",
+        "lib/brod_console_logger.ex",
         ".formatter.exs",
         "mix.exs",
         "README*",
@@ -64,7 +65,7 @@ defmodule Kvasir.MixProject do
   defp deps do
     [
       {:common_x, "~> 0.5"},
-      {:jason, "~> 1.1"},
+      {:jason, "~> 1.2"},
       {:msgpax, "~> 2.2"},
       {:poolboy, "~> 1.5"},
       {:utc_datetime, "~> 1.0"},
