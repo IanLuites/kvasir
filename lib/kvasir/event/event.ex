@@ -605,6 +605,10 @@ defmodule Kvasir.Event do
     quote do: unquote(a) or unquote(b)
   end
 
+  defp parse_version({a, b, c, _, _}) do
+    [a || 0, b || 0, c || 0]
+  end
+
   defp parse_version(version) do
     case String.split(version, ".") do
       [] -> :error
