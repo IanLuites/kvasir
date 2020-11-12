@@ -10,10 +10,10 @@ defmodule Kvasir.Source do
 
   @callback child_spec(name :: atom, opts :: Keyword.t()) :: false | map
 
-  @callback commit(name :: atom, Kvasir.topic(), Kvasir.Event.t()) ::
+  @callback commit(name :: atom, Kvasir.Topic.t(), Kvasir.Event.t()) ::
               {:ok, Kvasir.Event.t()} | {:error, atom}
 
-  @callback dedicated_publisher(name :: atom, Kvasir.topic()) ::
+  @callback dedicated_publisher(name :: atom, Kvasir.Topic.t()) ::
               {:ok, (Kvasir.Event.t() -> {:ok, Kvasir.Event.t()} | {:error, atom})}
 
   @callback contains?(name :: atom, Kvasir.topic(), Kvasir.Offset.t()) :: :maybe | true | false
