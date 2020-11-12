@@ -311,6 +311,28 @@ defmodule Kvasir.EventSource do
         end
       end
 
+      @doc ~S"""
+      Generate a dedicated publisher for a given topic.
+
+      This publisher lives for as long as the caller process.
+
+      ## Examples
+
+      ```elixir
+      # iex> dedicated_publisher("users")
+      # #Function<44.97283095/1 in :erl_eval.expr/5>
+      ```
+      """
+      def dedicated_publisher(topic) do
+        with t = %{key: topic_key, partitions: partitions} <-
+               __topics__()[topic] || {:error, :unknown_topic} do
+          __source__().dedicated_publisher(
+            unquote(Module.concat(__CALLER__.module, Source)),
+            topic
+          )
+        end
+      end
+
       @doc false
       @spec __source__ :: term
       def __source__, do: unquote(event_storage)
