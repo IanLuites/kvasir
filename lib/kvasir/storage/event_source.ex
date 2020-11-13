@@ -312,22 +312,26 @@ defmodule Kvasir.EventSource do
       end
 
       @doc ~S"""
-      Generate a dedicated publisher for a given topic.
+      Generate a dedicated publisher module for a given topic.
 
-      This publisher lives for as long as the caller process.
+      This publisher needs to be started with `start_link`,
+      but can also added a child to a Supervisor.
 
       ## Examples
 
       ```elixir
-      # iex> dedicated_publisher("users")
-      # #Function<44.97283095/1 in :erl_eval.expr/5>
+      # iex> generate_dedicated_publisher(MyPublisher, "users")
+      # iex> MyPublisher.publish(<event>)
       ```
       """
-      def dedicated_publisher(topic) do
+      @spec generate_dedicated_publisher(name :: module, Kvasir.topic()) ::
+              :ok | {:error, atom}
+      def generate_dedicated_publisher(name, topic) do
         with t = %{key: topic_key, partitions: partitions} <-
                __topics__()[topic] || {:error, :unknown_topic} do
-          __source__().dedicated_publisher(
+          __source__().generate_dedicated_publisher(
             unquote(Module.concat(__CALLER__.module, Source)),
+            name,
             topic
           )
         end
