@@ -332,7 +332,7 @@ defmodule Kvasir.EventSource do
           __source__().generate_dedicated_publisher(
             unquote(Module.concat(__CALLER__.module, Source)),
             name,
-            topic
+            t
           )
         end
       end
