@@ -324,15 +324,16 @@ defmodule Kvasir.EventSource do
       # iex> MyPublisher.publish(<event>)
       ```
       """
-      @spec generate_dedicated_publisher(name :: module, Kvasir.topic()) ::
+      @spec generate_dedicated_publisher(name :: module, Kvasir.topic(), opts :: Keyword.t()) ::
               :ok | {:error, atom}
-      def generate_dedicated_publisher(name, topic) do
+      def generate_dedicated_publisher(name, topic, opts \\ []) do
         with t = %{key: topic_key, partitions: partitions} <-
                __topics__()[topic] || {:error, :unknown_topic} do
           __source__().generate_dedicated_publisher(
             unquote(Module.concat(__CALLER__.module, Source)),
             name,
-            t
+            t,
+            opts
           )
         end
       end

@@ -13,7 +13,12 @@ defmodule Kvasir.Source do
   @callback commit(name :: atom, Kvasir.Topic.t(), Kvasir.Event.t()) ::
               {:ok, Kvasir.Event.t()} | {:error, atom}
 
-  @callback generate_dedicated_publisher(name :: atom, target :: module, Kvasir.Topic.t()) ::
+  @callback generate_dedicated_publisher(
+              name :: atom,
+              target :: module,
+              Kvasir.Topic.t(),
+              opts :: Keyword.t()
+            ) ::
               :ok | {:error, atom}
 
   @callback contains?(name :: atom, Kvasir.topic(), Kvasir.Offset.t()) :: :maybe | true | false
