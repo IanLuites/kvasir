@@ -1,6 +1,6 @@
 defmodule Kvasir.MixProject do
   use Mix.Project
-  @version "0.0.10"
+  @version "0.0.11"
 
   def project do
     [
