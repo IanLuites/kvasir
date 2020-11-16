@@ -320,21 +320,59 @@ defmodule Kvasir.EventSource do
       ## Examples
 
       ```elixir
-      # iex> generate_dedicated_publisher(MyPublisher, "users")
-      # iex> MyPublisher.publish(<event>)
+      # iex> start_dedicated_publisher(:my_publisher)
+      # iex> dedicated_publish(:my_publisher, <topic>, <event>)
       ```
       """
-      @spec generate_dedicated_publisher(name :: module, Kvasir.topic(), opts :: Keyword.t()) ::
-              :ok | {:error, atom}
-      def generate_dedicated_publisher(name, topic, opts \\ []) do
+      @spec start_dedicated_publisher(name :: atom, opts :: Keyword.t()) ::
+              :ok | {:ok, pid} | {:error, atom}
+      def start_dedicated_publisher(name, opts \\ []) do
+        __source__().start_dedicated_publisher(
+          unquote(Module.concat(__CALLER__.module, Source)),
+          name,
+          opts
+        )
+      end
+
+      @doc ~S"""
+      Publish an event to a given topic using a dedicated publisher.
+
+      ## Examples
+
+      ```elixir
+      iex> dedicated_publish("users", UserEvent.create("bob"))
+      :ok
+      ```
+      """
+      @spec dedicated_publish(publisher :: atom, String.t(), Kvasir.Event.t(), Keyword.t()) ::
+              {:ok, Kvasir.Event.t()} | {:error, atom}
+      def dedicated_publish(publisher, topic, event, opts \\ []) do
         with t = %{key: topic_key, partitions: partitions} <-
                __topics__()[topic] || {:error, :unknown_topic} do
-          __source__().generate_dedicated_publisher(
-            unquote(Module.concat(__CALLER__.module, Source)),
-            name,
-            t,
-            opts
-          )
+          if k = opts[:key] do
+            with {:ok, key} <- topic_key.parse(k, opts),
+                 {:ok, partition} <- topic_key.partition(key, partitions) do
+              e =
+                event
+                |> Kvasir.Event.set_key(key)
+                |> Kvasir.Event.set_partition(partition)
+                |> Kvasir.Event.set_topic(topic)
+
+              __source__().dedicated_commit(
+                unquote(Module.concat(__CALLER__.module, Source)),
+                publisher,
+                t,
+                e
+              )
+            end
+          else
+            __source__().dedicated_commit(
+              unquote(Module.concat(__CALLER__.module, Source)),
+              publisher,
+              t,
+              event
+            )
+          end
         end
       end
 
