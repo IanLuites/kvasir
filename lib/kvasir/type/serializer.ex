@@ -28,7 +28,7 @@ defmodule Kvasir.Type.Serializer do
         do_encode(fields, data, acc)
 
       :error ->
-        if opts[:default] || opts[:optional],
+        if Keyword.has_key?(opts, :default) || opts[:optional],
           do: do_encode(fields, data, acc),
           else: {:error, :"missing_#{field}_field"}
 
@@ -47,8 +47,8 @@ defmodule Kvasir.Type.Serializer do
     else
       :error ->
         cond do
-          default = opts[:default] ->
-            with {:ok, d} <- default_value(default, opts),
+          Keyword.has_key?(opts, :default) ->
+            with {:ok, d} <- default_value(opts[:default], opts),
                  do: do_decode(fields, data, Map.put(acc, field, d))
 
           opts[:optional] ->
