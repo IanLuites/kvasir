@@ -92,16 +92,18 @@ defmodule Kvasir.EventSource do
             Map.new(topics, fn {k, v} -> {k, v.partitions} end)
           )
 
+        source_child_spec =
+          __source__().child_spec(
+            Module.concat(__MODULE__, Source),
+            config(:source, Keyword.merge(unquote(event_storage_opts), opts))
+          )
+
         children =
-          unquote(cold_storage_setup)
-          |> (&[
-                __source__().child_spec(
-                  Module.concat(__MODULE__, Source),
-                  config(:source, Keyword.merge(unquote(event_storage_opts), opts))
-                )
-                | &1
-              ]).()
-          |> Enum.reject(&(&1 == false))
+          if System.get_env("KVASIR_DISABLE_COLD_STORAGE", "false") in ["true", "1"] do
+            [source_child_spec]
+          else
+            [source_child_spec | unquote(cold_storage_setup)]
+          end
 
         ### Testings
 
@@ -150,7 +152,7 @@ defmodule Kvasir.EventSource do
         )
 
         Supervisor.start_link(
-          children,
+          Enum.reject(children, &(&1 == false)),
           strategy: :one_for_one,
           name: __MODULE__
         )
