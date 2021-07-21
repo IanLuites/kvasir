@@ -1,13 +1,13 @@
 defmodule Kvasir.Event.Encoding.Topic do
-  @spec create(Kvasir.Topic.t(), term) :: term
-  def generate(topic, extra \\ nil) do
-    {_mod, code} = generate_module(topic, extra: extra, overwrite: true, events: :all)
+  @spec generate(Kvasir.Topic.t(), runtime? :: boolean, term) :: term
+  def generate(topic, runtime?, extra \\ nil) do
+    {_mod, code} = generate_module(topic, runtime?, extra: extra, overwrite: true, events: :all)
     code
   end
 
-  @spec create(Kvasir.Topic.t(), Keyword.t()) :: module
-  def create(topic, opts \\ []) do
-    {mod, code} = generate_module(topic, opts)
+  @spec create(Kvasir.Topic.t(), runtime? :: boolean, Keyword.t()) :: module
+  def create(topic, runtime?, opts \\ []) do
+    {mod, code} = generate_module(topic, runtime?, opts)
 
     if code do
       Code.compiler_options(ignore_module_conflict: true)
@@ -18,8 +18,8 @@ defmodule Kvasir.Event.Encoding.Topic do
     mod
   end
 
-  @spec generate_module(Kvasir.Topic.t(), Keyword.t()) :: {module, term}
-  defp generate_module(topic, opts) do
+  @spec generate_module(Kvasir.Topic.t(), runtime? :: boolean, Keyword.t()) :: {module, term}
+  defp generate_module(topic, runtime?, opts) do
     {events, mod} =
       case opts[:only] do
         all when all in [nil, :all] ->
@@ -56,11 +56,11 @@ defmodule Kvasir.Event.Encoding.Topic do
           :always ->
             {quote do
                defp encrypt(_, data),
-                 do: unquote(encrypter).encrypt(data, unquote(encrypter_opts))
+                 do: unquote(encrypter).encrypt(data, unquote(runtime?), unquote(encrypter_opts))
              end,
              quote do
                defp decrypt(_, data),
-                 do: unquote(encrypter).decrypt(data, unquote(encrypter_opts))
+                 do: unquote(encrypter).decrypt(data, unquote(runtime?), unquote(encrypter_opts))
              end}
 
           :sensitive_only ->
@@ -77,13 +77,23 @@ defmodule Kvasir.Event.Encoding.Topic do
                 if e.__event__(:sensitive) != [] do
                   {quote do
                      defp encrypt(unquote(e), data),
-                       do: unquote(encrypter).encrypt(data, unquote(encrypter_opts))
+                       do:
+                         unquote(encrypter).encrypt(
+                           data,
+                           unquote(runtime?),
+                           unquote(encrypter_opts)
+                         )
 
                      unquote(a)
                    end,
                    quote do
                      defp decrypt(unquote(e), data),
-                       do: unquote(encrypter).decrypt(data, unquote(encrypter_opts))
+                       do:
+                         unquote(encrypter).decrypt(
+                           data,
+                           unquote(runtime?),
+                           unquote(encrypter_opts)
+                         )
 
                      unquote(b)
                    end}

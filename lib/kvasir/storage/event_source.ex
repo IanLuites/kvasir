@@ -85,6 +85,10 @@ defmodule Kvasir.EventSource do
             filter -> Map.take(__topics__(), filter)
           end
 
+        topics
+        |> Enum.map(fn {_, %{module: m}} -> m end)
+        |> Enum.each(&apply(&1, :regenerate, []))
+
         opts =
           Keyword.put(
             opts,
@@ -520,6 +524,39 @@ defmodule Kvasir.EventSource do
         end
       )
 
+    filter =
+      quote do
+        @doc ~S"""
+        Generate a topic module made for encoding/decoding
+        a subset of events.
+
+        ## Examples
+
+        ```elixir
+        iex> MySource.MyTopic.filter([MyEvent])
+        MySource.MyTopic.F3227A3894E15B922A187CE92BE2DA902
+        ```
+        """
+        @spec filter([Kvasir.Event.t()]) :: module
+        def filter(events) do
+          Kvasir.Event.Encoding.Topic.create(
+            unquote(Macro.escape(setup)),
+            true,
+            overwrite: false,
+            only: events
+          )
+        end
+      end
+
+    regenerate_filter =
+      quote do
+        unquote(filter)
+
+        @doc false
+        def regenerate
+        def regenerate, do: :ok
+      end
+
     quote do
       Module.put_attribute(
         __MODULE__,
@@ -569,24 +606,18 @@ defmodule Kvasir.EventSource do
       unquote(
         Kvasir.Event.Encoding.Topic.generate(
           setup,
+          false,
           quote do
-            @doc ~S"""
-            Generate a topic module made for encoding/decoding
-            a subset of events.
+            unquote(filter)
 
-            ## Examples
-
-            ```elixir
-            iex> MySource.MyTopic.filter([MyEvent])
-            MySource.MyTopic.F3227A3894E15B922A187CE92BE2DA902
-            ```
-            """
-            @spec filter([Kvasir.Event.t()]) :: module
-            def filter(events) do
+            @doc false
+            def regenerate do
               Kvasir.Event.Encoding.Topic.create(
                 unquote(Macro.escape(setup)),
-                overwrite: false,
-                only: events
+                true,
+                extra: unquote(Macro.escape(regenerate_filter)),
+                overwrite: true,
+                events: :all
               )
             end
           end
@@ -631,9 +662,7 @@ defmodule Kvasir.EventSource do
     missing = Enum.filter(events || [], &(&1 not in topic.events))
 
     unless missing == [] do
-      raise "The following events do not belong to the topic:\n#{
-              missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")
-            }"
+      raise "The following events do not belong to the topic:\n#{missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")}"
     end
 
     from =
@@ -697,9 +726,7 @@ defmodule Kvasir.EventSource do
     missing = Enum.filter(event_option || [], &(&1 not in topic.events))
 
     unless missing == [] do
-      raise "The following events do not belong to the topic:\n#{
-              missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")
-            }"
+      raise "The following events do not belong to the topic:\n#{missing |> Enum.map(&"      #{inspect(&1)}") |> Enum.join("\n")}"
     end
 
     event_filter = if event_option, do: Enum.map(event_option, &type/1)

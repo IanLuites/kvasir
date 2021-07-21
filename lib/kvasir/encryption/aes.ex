@@ -1,8 +1,8 @@
 defmodule Kvasir.Encryption.AES do
   @default_bits 128
 
-  defmacro encrypt(data, opts) do
-    {key, cipher, _aead?} = configure!(opts)
+  defmacro encrypt(data, runtime?, opts) do
+    {key, cipher, _aead?} = configure!(runtime?, opts)
 
     quote do
       iv = :crypto.strong_rand_bytes(16)
@@ -13,8 +13,8 @@ defmodule Kvasir.Encryption.AES do
     end
   end
 
-  defmacro decrypt(data, opts) do
-    {key, cipher, _aead?} = configure!(opts)
+  defmacro decrypt(data, runtime?, opts) do
+    {key, cipher, _aead?} = configure!(runtime?, opts)
 
     quote do
       case unquote(data) do
@@ -33,11 +33,12 @@ defmodule Kvasir.Encryption.AES do
 
   require Logger
 
-  @spec configure!(Keyword.t()) :: {binary, atom, boolean}
-  defp configure!(opts) do
+  @spec configure!(runtime? :: boolean, Keyword.t()) :: {binary, atom, boolean}
+  defp configure!(runtime?, opts) do
     bits = Keyword.get(opts, :bits, @default_bits)
     aead? = Keyword.get(opts, :aead, false)
-    key = fetch_key!(opts[:key], bits)
+    key_setting = opts[:key]
+    key = if runtime?, do: fetch_key!(key_setting, bits), else: fetch_key(key_setting, bits)
 
     check_key!(key, bits)
     if aead?, do: raise(CompileError, description: "AEAD currently not supported.")
@@ -61,17 +62,15 @@ defmodule Kvasir.Encryption.AES do
     {key, :"aes_#{bits}_#{mode}", aead?}
   end
 
+  @spec fetch_key(term, pos_integer) :: binary
+  defp fetch_key(key, bits)
+  defp fetch_key(nil, bits), do: fetch_key!(:generate, bits)
+  defp fetch_key({:system, var}, bits), do: var |> System.get_env() |> fetch_key(bits)
+  defp fetch_key(key, bits), do: fetch_key!(key, bits)
+
   @spec fetch_key!(term, pos_integer) :: binary | no_return
   defp fetch_key!(key, bits)
-
-  defp fetch_key!(nil, bits) do
-    if Process.whereis(Mix.TasksServer) do
-      fetch_key!(:generate, bits)
-    else
-      raise "No encryption key set."
-    end
-  end
-
+  defp fetch_key!(nil, _bits), do: raise("No encryption key set.")
   defp fetch_key!({:system, var}, bits), do: var |> System.get_env() |> fetch_key!(bits)
 
   defp fetch_key!(:generate, bits) do
