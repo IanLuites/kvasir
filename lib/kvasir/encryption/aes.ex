@@ -62,7 +62,16 @@ defmodule Kvasir.Encryption.AES do
   end
 
   @spec fetch_key!(term, pos_integer) :: binary | no_return
-  defp fetch_key!(nil, _bits), do: raise("No encryption key set.")
+  defp fetch_key!(key, bits)
+
+  defp fetch_key!(nil, bits) do
+    if Process.whereis(Mix.TasksServer) do
+      fetch_key!(:generate, bits)
+    else
+      raise "No encryption key set."
+    end
+  end
+
   defp fetch_key!({:system, var}, bits), do: var |> System.get_env() |> fetch_key!(bits)
 
   defp fetch_key!(:generate, bits) do
